@@ -1,0 +1,54 @@
+UNO ONLINE - PROJECT STRUCTURE
+
+backend/
+ ├── src/
+ │    ├── auth/      : xử lý login / guest
+ │    ├── lobby/     : tạo phòng, join phòng, matchmaking
+ │    ├── game/      : game engine (logic UNO)
+ │    ├── socket/    : xử lý realtime (WebSocket)
+ │    └── utils/     : hàm dùng chung
+ └── config/         : cấu hình hệ thống (db, env)
+
+frontend/
+ ├── css/            : file giao diện
+ ├── js/             : xử lý logic frontend
+ ├── assets/         : hình ảnh, tài nguyên
+ └── pages/          : các trang (login, lobby, game)
+
+docs/
+ ├── api/            : mô tả REST API
+ ├── socket/         : mô tả event realtime
+ └── game/           : luật game UNO
+
+
+PHÂN CÔNG
+
+Backend 1:
+- backend/src/game
+
+Backend 2:
+- backend/src/auth
+- backend/src/lobby
+
+Frontend 1:
+- frontend/js (game)
+- frontend/pages (game)
+
+Frontend 2:
+- frontend/js (lobby)
+- frontend/pages (index, lobby)
+
+
+QUY TẮC
+
+- Không sửa folder của người khác
+- Không đổi tên thư mục
+- Code đúng module được giao
+- Luôn pull trước khi code
+
+
+MỤC TIÊU
+
+- Game UNO realtime 4 người
+- Backend xử lý toàn bộ logic
+- Frontend chỉ hiển thị và gửi action
