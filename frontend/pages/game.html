@@ -1,37 +1,62 @@
-<div id="uno-battlefield">
-    
-    <div id="opponent-top" class="player-zone top">
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>UNO — Bàn chơi</title>
+  <link rel="stylesheet" href="../css/game.css" />
+</head>
+<body>
+  <div id="game-shell">
+    <header id="demo-hud" aria-label="Thanh trạng thái mẫu">
+      <span id="mode-badge" class="badge">UI mẫu (mock)</span>
+      <button type="button" id="demo-next-turn">Đổi lượt</button>
+      <button type="button" id="demo-draw">Bốc bài</button>
+      <button type="button" id="demo-wild">Mở chọn màu</button>
+      <span id="socket-status"></span>
+    </header>
+
+    <div id="uno-battlefield">
+      <div id="opponent-top" class="player-zone top">
         <div class="avatar-container">
-            <img src="../assets/avatars/bot1.png" alt="Player 2">
-            <div class="timer-ring"></div>
+          <span class="avatar-fallback" title="Đối thủ">P2</span>
+          <div class="timer-ring"></div>
         </div>
         <div class="card-count">🂠 5</div>
-    </div>
+      </div>
 
-    <div id="center-table">
-        <div class="direction-arrows clockwise"></div>
-        <div id="draw-pile" class="pile"></div>
-        <div id="discard-pile" class="pile">
-            </div>
+      <div id="center-table">
         <div id="current-color-glow" class="glow-red"></div>
-    </div>
-
-    <div id="my-zone" class="player-zone bottom">
-        <div class="avatar-container">
-            <img src="../assets/avatars/me.png" alt="My Avatar">
-            <div class="timer-ring"></div>
+        <div class="direction-arrows clockwise"></div>
+        <div class="piles-row">
+          <div id="draw-pile" class="pile" aria-hidden="true"></div>
+          <div id="discard-pile" class="pile" aria-label="Chồng bỏ bài"></div>
         </div>
-        <div id="my-hand" class="hand-container">
-            </div>
-        
-        <button id="btn-call-uno" class="hidden">UNO!</button>
-    </div>
+      </div>
 
-    <div id="color-picker-modal" class="hidden">
-        <div class="color-slice red" data-color="red"></div>
-        <div class="color-slice blue" data-color="blue"></div>
-        <div class="color-slice green" data-color="green"></div>
-        <div class="color-slice yellow" data-color="yellow"></div>
-    </div>
+      <div id="my-zone" class="player-zone bottom">
+        <div class="player-row">
+          <div class="avatar-container">
+            <span class="avatar-fallback" title="Bạn">Tôi</span>
+            <div class="timer-ring"></div>
+          </div>
+        </div>
+        <div id="my-hand" class="hand-container"></div>
+        <button type="button" id="btn-call-uno" class="hidden">UNO!</button>
+      </div>
 
-</div>
+      <div id="color-picker-modal" class="hidden" role="dialog" aria-modal="true" aria-label="Chọn màu">
+        <div class="color-wheel">
+          <div class="color-slice red" data-color="red" role="button" tabindex="0" aria-label="Đỏ"></div>
+          <div class="color-slice blue" data-color="blue" role="button" tabindex="0" aria-label="Xanh dương"></div>
+          <div class="color-slice green" data-color="green" role="button" tabindex="0" aria-label="Xanh lá"></div>
+          <div class="color-slice yellow" data-color="yellow" role="button" tabindex="0" aria-label="Vàng"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" crossorigin="anonymous"></script>
+  <script src="../js/game.js" defer></script>
+</body>
+</html>
