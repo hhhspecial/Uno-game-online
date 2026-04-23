@@ -31,7 +31,7 @@ async function login(username, password) {
     return { success: true, userId: existingUser.id, username: existingUser.username };
 }
 
-function getUserById(id) {
+function getPlayer(id) {
     return users[id] || null;
 }
 
@@ -40,5 +40,5 @@ module.exports = {
     createGuestUser,
     register,
     login,
-    getUserById
+    getPlayer
 };

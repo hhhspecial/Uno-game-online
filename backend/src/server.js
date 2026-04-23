@@ -13,7 +13,10 @@ const io = new Server(server, {
 app.use(express.json());
 
 const authRouter = require('./auth'); 
-app.use('/', authRouter);
+app.use('/auth', authRouter);
+
+const lobbyRouter = require('./lobby');
+app.use('/lobby', lobbyRouter);
 
 app.get('/ping', (req, res) => {
     res.json({status: 'UNO Server is running'});
