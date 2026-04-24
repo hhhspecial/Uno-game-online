@@ -1,12 +1,15 @@
+const { createDeck, shuffle } = require("./deck")
+
 let games = {}
 
 function createGame(players){
   roomId = "room_"+ Date.now() 
 
+  let deck = shuffle(createDeck())
   let hand ={}
 
   players.forEach(p => {
-    hand[p.id] = []
+    hand[p.id] = deck.splice(0, 7)
   });
 
 
@@ -14,9 +17,10 @@ function createGame(players){
     roomId,
     players,
     hand,
+    deck,
     currentTurn: players[0].id,
     direction: 1,
-    currentCard :{color:"Red", value:"5"},
+    currentCard :{color:"red", value:"5"},
     drawStack : 0,
     status : "playing"
   }

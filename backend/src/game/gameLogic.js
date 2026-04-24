@@ -8,11 +8,20 @@ function isValidMove(card,currentCard){
         return false
     }
 }
-function nextTurn(gameState) {
-    const players = gameState.players
-    let index = players.finIndex(p => p.id === gameState.currentTurn)
+function nextTurn(game) {
+  const players = game.players
 
-    let nextPlayer = (index + gameState.direction + players.lenght) % players.lenght
+  const index = players.findIndex(p => p.id === game.currentTurn)
+
+  if (index === -1) {
+    console.log("ERROR: currentTurn not found")
+    return
+  }
+
+  const nextIndex =
+    (index + game.direction + players.length) % players.length
+
+  game.currentTurn = players[nextIndex].id
 }
 
 module.exports = {

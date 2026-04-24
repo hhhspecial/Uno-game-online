@@ -1,3 +1,5 @@
+const { handleEvent } = require("./gameEngine")
+
 let queue = []
 
 function addEvent(event){
@@ -11,14 +13,5 @@ function processQueue() {
   }
 }
 
-function handleEvent(event){
-    if(event.type = "play_card"){
-        //check hop le
-        //udate state
-    }
-    if(event.type = "draw_card"){
-        // thêm bài
-    }
-}
 
 module.exports = {addEvent, processQueue}
