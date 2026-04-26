@@ -40,7 +40,11 @@
         { type: "wild" },
         { color: "red", value: "0" },
       ],
-      opponents: [{ name: "P2", count: 5 }],
+      opponents: [
+        { seat: 1, label: "P2", count: 5 },
+        { seat: 2, label: "P3", count: 4 },
+        { seat: 3, label: "P4", count: 7 },
+      ],
       currentSeat: 0,
       mySeat: 0,
       mustChooseColor: false,
@@ -101,30 +105,49 @@
     if (!pile) return;
     pile.innerHTML = "";
     if (!state.topCard) return;
+    var underCount = 2;
+    for (var i = 0; i < underCount; i++) {
+      var under = document.createElement("div");
+      under.className = "discard-under";
+      under.setAttribute("aria-hidden", "true");
+      under.style.setProperty("--u", String(i + 1));
+      pile.appendChild(under);
+    }
     var div = document.createElement("div");
-    div.className = "card small " + cardClass(state.topCard.color || state.topCard.type);
+    div.className =
+      "card small on-discard " + cardClass(state.topCard.color || state.topCard.type);
     div.textContent = cardFace(state.topCard);
     pile.appendChild(div);
   }
 
   function renderOpponents() {
-    var zone = el("opponent-top");
-    if (!zone) return;
-    var opp = state.opponents && state.opponents[0];
-    var countEl = zone.querySelector(".card-count");
-    if (countEl && opp) {
-      countEl.textContent = "🂠 " + opp.count;
-    }
-    var av = zone.querySelector(".avatar-container");
-    if (av) {
-      av.classList.toggle("active-turn", state.currentSeat !== state.mySeat);
-    }
+    var zones = document.querySelectorAll("#uno-battlefield .player-zone.opponent");
+    zones.forEach(function (zone) {
+      var seat = parseInt(zone.getAttribute("data-seat"), 10);
+      if (Number.isNaN(seat)) return;
+      var opp = null;
+      (state.opponents || []).forEach(function (o) {
+        if (o.seat === seat) opp = o;
+      });
+      var countEl = zone.querySelector(".card-count");
+      if (countEl && opp) {
+        countEl.textContent = "🂠 " + opp.count;
+      }
+      var label = zone.querySelector(".avatar-fallback");
+      if (label && opp && opp.label) {
+        label.textContent = opp.label;
+      }
+      var av = zone.querySelector(".avatar-container");
+      if (av) {
+        av.classList.toggle("active-turn", state.currentSeat === seat);
+      }
+    });
   }
 
   function renderMyZone() {
     var myZone = el("my-zone");
     var hand = el("my-hand");
-    var myAv = myZone && myZone.querySelector(".avatar-container");
+    var myAv = myZone && myZone.querySelector(".my-footer .avatar-container");
     if (myAv) {
       myAv.classList.toggle("active-turn", state.currentSeat === state.mySeat);
     }
@@ -136,6 +159,7 @@
       btn.type = "button";
       btn.className = "card " + cardClass(card.color || card.type);
       btn.textContent = cardFace(card);
+      btn.style.setProperty("--z", String(10 + index));
       btn.disabled = !isMyTurn;
       btn.addEventListener("click", function () {
         onPlayCard(index, card);
@@ -182,7 +206,7 @@
       state.currentColor = card.color || state.currentColor;
     }
     state.myHand.splice(index, 1);
-    state.currentSeat = 1;
+    state.currentSeat = (state.mySeat + 1) % 4;
     state.unoButtonVisible = state.myHand.length === 1;
     render();
   }
@@ -203,7 +227,7 @@
   }
 
   function mockNextTurn() {
-    state.currentSeat = state.currentSeat === state.mySeat ? 1 : state.mySeat;
+    state.currentSeat = (state.currentSeat + 1) % 4;
     render();
   }
 

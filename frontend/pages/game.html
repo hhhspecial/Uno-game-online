@@ -17,12 +17,20 @@
     </header>
 
     <div id="uno-battlefield">
-      <div id="opponent-top" class="player-zone top">
+      <div id="opponent-top" class="player-zone opponent top" data-seat="1">
         <div class="avatar-container">
-          <span class="avatar-fallback" title="Đối thủ">P2</span>
+          <span class="avatar-fallback" title="Đối thủ trên">P2</span>
           <div class="timer-ring"></div>
         </div>
         <div class="card-count">🂠 5</div>
+      </div>
+
+      <div id="opponent-left" class="player-zone opponent left" data-seat="3">
+        <div class="avatar-container">
+          <span class="avatar-fallback" title="Đối thủ trái">P4</span>
+          <div class="timer-ring"></div>
+        </div>
+        <div class="card-count">🂠 7</div>
       </div>
 
       <div id="center-table">
@@ -30,19 +38,27 @@
         <div class="direction-arrows clockwise"></div>
         <div class="piles-row">
           <div id="draw-pile" class="pile" aria-hidden="true"></div>
-          <div id="discard-pile" class="pile" aria-label="Chồng bỏ bài"></div>
+          <div id="discard-pile" class="pile discard-stack" aria-label="Chồng bỏ bài"></div>
         </div>
       </div>
 
-      <div id="my-zone" class="player-zone bottom">
-        <div class="player-row">
+      <div id="opponent-right" class="player-zone opponent right" data-seat="2">
+        <div class="avatar-container">
+          <span class="avatar-fallback" title="Đối thủ phải">P3</span>
+          <div class="timer-ring"></div>
+        </div>
+        <div class="card-count">🂠 4</div>
+      </div>
+
+      <div id="my-zone" class="player-zone bottom" data-seat="0">
+        <div id="my-hand" class="hand-container"></div>
+        <div class="my-footer">
           <div class="avatar-container">
             <span class="avatar-fallback" title="Bạn">Tôi</span>
             <div class="timer-ring"></div>
           </div>
+          <button type="button" id="btn-call-uno" class="hidden">UNO!</button>
         </div>
-        <div id="my-hand" class="hand-container"></div>
-        <button type="button" id="btn-call-uno" class="hidden">UNO!</button>
       </div>
 
       <div id="color-picker-modal" class="hidden" role="dialog" aria-modal="true" aria-label="Chọn màu">
