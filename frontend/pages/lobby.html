@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>UNO — Phòng chờ</title>
+  <link rel="stylesheet" href="../css/lobby.css" />
+</head>
+<body>
+  <div class="lobby-container">
+    <div class="lobby-header">
+      <h1>🎴 UNO - Phòng chờ</h1>
+      <div class="player-info">
+        <div>
+          <div class="player-name" id="current-player">Người chơi</div>
+          <div class="player-status" id="login-type">Chế độ bình thường</div>
+        </div>
+        <button class="logout-btn" id="btn-logout">Đăng xuất</button>
+      </div>
+    </div>
+
+    <div class="lobby-content">
+      <!-- Create Room Panel -->
+      <div class="panel">
+        <h2>📝 Tạo phòng mới</h2>
+        
+        <div class="message error-message" id="create-error"></div>
+        <div class="message success-message" id="create-success"></div>
+
+        <form class="create-room-form" id="create-room-form">
+          <div class="form-group">
+            <label for="room-name">Tên phòng</label>
+            <input 
+              type="text" 
+              id="room-name" 
+              placeholder="Ví dụ: Phòng bạn"
+              required
+              minlength="3"
+              maxlength="30"
+            />
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="max-players">Số người chơi tối đa</label>
+              <select id="max-players" required>
+                <option value="2">2 người</option>
+                <option value="3">3 người</option>
+                <option value="4" selected>4 người</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="game-difficulty">Độ khó</label>
+              <select id="game-difficulty" required>
+                <option value="easy">Dễ</option>
+                <option value="normal" selected>Bình thường</option>
+                <option value="hard">Khó</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="room-password">Mật khẩu phòng (tùy chọn)</label>
+            <input 
+              type="password" 
+              id="room-password" 
+              placeholder="Để trống nếu không cần"
+              maxlength="20"
+            />
+          </div>
+
+          <button type="button" class="btn-create" id="btn-create-room">Tạo phòng</button>
+        </form>
+      </div>
+
+      <!-- Available Rooms Panel -->
+      <div class="panel">
+        <h2>🎮 Phòng chơi khả dụng</h2>
+
+        <div class="message error-message" id="join-error"></div>
+        <div class="message success-message" id="join-success"></div>
+
+        <div id="rooms-loading" class="loading" style="display: none;">
+          <div class="spinner"></div>
+          Đang tải danh sách phòng...
+        </div>
+
+        <div id="rooms-container" class="rooms-list">
+          <div class="empty-state">
+            <div class="empty-state-icon">📭</div>
+            <div class="empty-state-text">Chưa có phòng nào. Hãy tạo một phòng mới!</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" crossorigin="anonymous"></script>
+  <script>
+    // Initialize player info
+    const username = sessionStorage.getItem('username') || 'Người chơi';
+    const loginType = sessionStorage.getItem('loginType') || 'guest';
+    
+    document.getElementById('current-player').textContent = username;
+    document.getElementById('login-type').textContent = loginType === 'guest' ? 'Chơi tạm thời' : 'Chế độ bình thường';
+
+    // Logout button
+    document.getElementById('btn-logout').addEventListener('click', () => {
+      sessionStorage.clear();
+      window.location.href = 'login.html';
+    });
+
+    // Create Room Handler
+    document.getElementById('btn-create-room').addEventListener('click', async (e) => {
+      e.preventDefault();
+      
+      const roomName = document.getElementById('room-name').value.trim();
+      const maxPlayers = document.getElementById('max-players').value;
+      const difficulty = document.getElementById('game-difficulty').value;
+      const password = document.getElementById('room-password').value;
+
+      if (!roomName) {
+        showMessage('create-error', 'Vui lòng nhập tên phòng');
+        return;
+      }
+
+      document.getElementById('btn-create-room').disabled = true;
+
+      try {
+        // TODO: Send create room request to backend
+        // const response = await fetch('/api/rooms/create', {
+        //   method: 'POST',
+        //   headers: { 'Content-Type': 'application/json' },
+        //   body: JSON.stringify({
+        //     roomName,
+        //     maxPlayers,
+        //     difficulty,
+        //     password,
+        //     createdBy: username
+        //   })
+        // });
+
+        showMessage('create-success', 'Phòng được tạo thành công! Chuyển hướng...');
+        setTimeout(() => {
+          window.location.href = 'game.html';
+        }, 1500);
+      } catch (error) {
+        showMessage('create-error', 'Không thể tạo phòng. Vui lòng thử lại.');
+        document.getElementById('btn-create-room').disabled = false;
+      }
+    });
+
+    // Load Available Rooms
+    async function loadRooms() {
+      const container = document.getElementById('rooms-container');
+      document.getElementById('rooms-loading').style.display = 'block';
+      container.innerHTML = '';
+
+      try {
+        // TODO: Fetch rooms from backend
+        // const response = await fetch('/api/rooms');
+        // const rooms = await response.json();
+
+        // Mock data for demonstration
+        const rooms = [
+          {
+            id: 1,
+            name: 'Phòng cộng đồng',
+            players: 3,
+            maxPlayers: 4,
+            difficulty: 'normal',
+            status: 'waiting',
+            createdBy: 'Admin'
+          },
+          {
+            id: 2,
+            name: 'Chơi nhanh',
+            players: 2,
+            maxPlayers: 4,
+            difficulty: 'easy',
+            status: 'playing',
+            createdBy: 'Player1'
+          }
+        ];
+
+        if (rooms.length === 0) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-state-icon">📭</div>
+              <div class="empty-state-text">Chưa có phòng nào. Hãy tạo một phòng mới!</div>
+            </div>
+          `;
+        } else {
+          container.innerHTML = rooms.map(room => `
+            <div class="room-card" onclick="joinRoom(${room.id}, '${room.name}')">
+              <div class="room-info">
+                <div class="room-name">${room.name}</div>
+                <div class="room-details">
+                  <span>👤 ${room.players}/${room.maxPlayers}</span>
+                  <span>⚙️ ${getDifficultyLabel(room.difficulty)}</span>
+                  <span>📊 Tác giả: ${room.createdBy}</span>
+                </div>
+              </div>
+              <div class="room-status">
+                <span class="status-badge ${getStatusClass(room.status)}">
+                  ${getStatusLabel(room.status)}
+                </span>
+                <button 
+                  type="button" 
+                  class="btn-join"
+                  ${room.players >= room.maxPlayers ? 'disabled' : ''}
+                  onclick="event.stopPropagation()"
+                >
+                  Tham gia
+                </button>
+              </div>
+            </div>
+          `).join('');
+        }
+
+        document.getElementById('rooms-loading').style.display = 'none';
+      } catch (error) {
+        console.error('Error loading rooms:', error);
+        document.getElementById('rooms-loading').style.display = 'none';
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">⚠️</div>
+            <div class="empty-state-text">Không thể tải danh sách phòng</div>
+          </div>
+        `;
+      }
+    }
+
+    function joinRoom(roomId, roomName) {
+      // TODO: Send join room request to backend
+      sessionStorage.setItem('roomId', roomId);
+      sessionStorage.setItem('roomName', roomName);
+      showMessage('join-success', `Tham gia phòng "${roomName}" thành công! Chuyển hướng...`);
+      setTimeout(() => {
+        window.location.href = 'game.html';
+      }, 1500);
+    }
+
+    function getDifficultyLabel(difficulty) {
+      const labels = { easy: 'Dễ', normal: 'Bình thường', hard: 'Khó' };
+      return labels[difficulty] || difficulty;
+    }
+
+    function getStatusLabel(status) {
+      const labels = {
+        waiting: 'Chờ người chơi',
+        playing: 'Đang chơi',
+        full: 'Phòng đầy'
+      };
+      return labels[status] || status;
+    }
+
+    function getStatusClass(status) {
+      const classes = {
+        waiting: 'status-waiting',
+        playing: 'status-playing',
+        full: 'status-full'
+      };
+      return classes[status] || '';
+    }
+
+    function showMessage(elementId, message) {
+      const element = document.getElementById(elementId);
+      element.textContent = message;
+      element.style.display = 'block';
+      
+      setTimeout(() => {
+        element.style.display = 'none';
+      }, 5000);
+    }
+
+    // Initial load
+    loadRooms();
+
+    // Refresh rooms every 5 seconds
+    setInterval(loadRooms, 5000);
+  </script>
+</body>
+</html>
