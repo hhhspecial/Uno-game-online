@@ -1,5 +1,6 @@
 const { getGame, updateGame } = require("./gameState")
 const { isValidMove, nextTurn } = require("./gameLogic")
+const { createDeck, shuffle} = require("./deck")
 
 function handleEvent(event) {
   const data = event.data
@@ -8,6 +9,10 @@ function handleEvent(event) {
 
   const game = getGame(roomId)
   if (!game) return
+  if (game.status === "finished") {
+        console.log("Game finished")
+        return
+  }
 
   // ===== PLAY CARD =====
   if (type === "play_card") {
@@ -68,6 +73,11 @@ function handleEvent(event) {
     // 4. update
     
     hand.splice(index, 1)
+    if (hand.length === 0) {
+        game.status = "finished"
+        console.log(playerId + " wins!")
+        return
+    }
 
     // 7. update current card
     if (card.color === "wild") {
@@ -98,38 +108,50 @@ function handleEvent(event) {
   }
 
   // ===== DRAW CARD =====
-  if (type === "draw_card") {
+    if (type === "draw_card") {
 
-    if (game.currentTurn !== playerId) {
-        console.log("Not your turn")
-        return
-    }
-
-    console.log("DRAW:", playerId, "STACK:", game.drawStack)
-
-    // ===== HANDLE STACK =====
-    if (game.drawStack > 0) {
-        for (let i = 0; i < game.drawStack; i++) {
-        const card = game.deck.pop()
-        if (card) {
-            game.hand[playerId].push(card)
-        }
+        if (game.currentTurn !== playerId) {
+            console.log("Not your turn")
+            return
         }
 
-        game.drawStack = 0
+        console.log("DRAW:", playerId, "STACK:", game.drawStack)
+
+        // ===== HANDLE STACK =====
+        if (game.drawStack > 0) {
+
+            for (let i = 0; i < game.drawStack; i++) {
+
+                if (game.deck.length === 0) {
+                    game.deck = shuffle(createDeck())
+                }
+
+                const card = game.deck.pop()
+
+                if (card) {
+                    game.hand[playerId].push(card)
+                }
+            }
+
+            game.drawStack = 0
+            nextTurn(game)
+            updateGame(roomId, game)
+            return
+        }
+
+        // ===== NORMAL DRAW =====
+        if (game.deck.length === 0) {
+            game.deck = shuffle(createDeck())
+        }
+
+        const drawn = game.deck.pop()
+
+        if (drawn) {
+            game.hand[playerId].push(drawn)
+        }
+
         nextTurn(game)
-        return
     }
-
-    // ===== NORMAL DRAW =====
-    const drawn = game.deck.pop()
-
-    if (drawn) {
-        game.hand[playerId].push(drawn)
-    }
-
-    nextTurn(game)
-  }
 
   updateGame(roomId, game)
 
