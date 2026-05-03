@@ -37,7 +37,15 @@
         <div id="current-color-glow" class="glow-red"></div>
         <div class="direction-arrows clockwise"></div>
         <div class="piles-row">
-          <div id="draw-pile" class="pile" aria-hidden="true"></div>
+          <div
+            id="draw-pile"
+            class="pile draw-pile-wrap"
+            role="button"
+            tabindex="0"
+            aria-label="Bốc bài"
+          >
+            <div class="draw-pile-stack" id="draw-pile-stack" aria-hidden="true"></div>
+          </div>
           <div id="discard-pile" class="pile discard-stack" aria-label="Chồng bỏ bài"></div>
         </div>
       </div>
@@ -69,6 +77,7 @@
           <div class="color-slice yellow" data-color="yellow" role="button" tabindex="0" aria-label="Vàng"></div>
         </div>
       </div>
+      <div id="card-motion-layer" aria-hidden="true"></div>
     </div>
   </div>
 
