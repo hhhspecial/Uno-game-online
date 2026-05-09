@@ -1,6 +1,7 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
+const { setupSocket } = require('./socket/socketHandle')
 
 const app = express();
 const server = http.createServer(app);
@@ -9,6 +10,7 @@ const io = new Server(server, {
         origin: '*',
     }
 });
+
 
 app.use(express.json());
 
@@ -22,12 +24,7 @@ app.get('/ping', (req, res) => {
     res.json({status: 'UNO Server is running'});
 });
 
-io.on('connection', (socket) => {
-    console.log('Client connected: ' + socket.id);
-    socket.on('disconnect', () => {
-        console.log('Client disconnected: ' + socket.id);
-    });
-});
+setupSocket(io)
 
 const PORT = process.env.PORT || 3000;
 

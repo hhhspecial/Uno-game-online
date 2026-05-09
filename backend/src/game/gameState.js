@@ -2,8 +2,7 @@ const { createDeck, shuffle } = require("./deck")
 
 let games = {}
 
-function createGame(players){
-  roomId = "room_"+ Date.now() 
+function createGame(players, roomId){
 
   let deck = shuffle(createDeck())
   let hand ={}
