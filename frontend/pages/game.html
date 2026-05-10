@@ -2,8 +2,9 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <title>UNO — Bàn chơi</title>
+  <meta name="description" content="UNO Online - Chơi UNO trực tuyến với bạn bè" />
   <link rel="stylesheet" href="../css/game.css" />
 </head>
 <body>
@@ -17,58 +18,79 @@
     </header>
 
     <div id="uno-battlefield">
+      <!-- TOP OPPONENT -->
       <div id="opponent-top" class="player-zone opponent top" data-seat="1">
-        <div class="avatar-container">
-          <span class="avatar-fallback" title="Đối thủ trên">P2</span>
-          <div class="timer-ring"></div>
-        </div>
-        <div class="card-count">🂠 5</div>
-      </div>
-
-      <div id="opponent-left" class="player-zone opponent left" data-seat="3">
-        <div class="avatar-container">
-          <span class="avatar-fallback" title="Đối thủ trái">P4</span>
-          <div class="timer-ring"></div>
-        </div>
-        <div class="card-count">🂠 7</div>
-      </div>
-
-      <div id="center-table">
-        <div id="current-color-glow" class="glow-red"></div>
-        <div class="direction-arrows clockwise"></div>
-        <div class="piles-row">
-          <div
-            id="draw-pile"
-            class="pile draw-pile-wrap"
-            role="button"
-            tabindex="0"
-            aria-label="Bốc bài"
-          >
-            <div class="draw-pile-stack" id="draw-pile-stack" aria-hidden="true"></div>
+        <div class="player-info" data-seat="1">
+          <div class="avatar-wrap">
+            <div class="avatar-circle">P2</div>
+            <div class="avatar-glow"></div>
           </div>
-          <div id="discard-pile" class="pile discard-stack" aria-label="Chồng bỏ bài"></div>
+          <span class="player-name">Player 2</span>
+        </div>
+        <div class="opponent-cards" data-seat="1"></div>
+        <span class="card-count-badge" data-seat="1"></span>
+      </div>
+
+      <!-- MIDDLE ROW: LEFT - CENTER - RIGHT -->
+      <div id="middle-row">
+        <!-- LEFT OPPONENT -->
+        <div id="opponent-left" class="player-zone opponent left" data-seat="3">
+          <div class="player-info" data-seat="3">
+            <div class="avatar-wrap">
+              <div class="avatar-circle">P4</div>
+              <div class="avatar-glow"></div>
+            </div>
+            <span class="player-name">Player 4</span>
+          </div>
+          <div class="opponent-cards" data-seat="3"></div>
+          <span class="card-count-badge" data-seat="3"></span>
+        </div>
+
+        <!-- CENTER TABLE -->
+        <div id="center-table">
+          <div id="current-color-glow" class="glow-red"></div>
+          <div class="direction-indicator">
+            <span class="dir-icon">↻</span>
+            <span class="dir-text">Thuận chiều</span>
+          </div>
+          <div class="piles-row">
+            <div id="draw-pile" class="draw-pile-wrap" role="button" tabindex="0" aria-label="Bốc bài">
+              <div class="draw-pile-stack" id="draw-pile-stack" aria-hidden="true"></div>
+            </div>
+            <div id="discard-pile" aria-label="Chồng bỏ bài"></div>
+          </div>
+        </div>
+
+        <!-- RIGHT OPPONENT -->
+        <div id="opponent-right" class="player-zone opponent right" data-seat="2">
+          <div class="player-info" data-seat="2">
+            <div class="avatar-wrap">
+              <div class="avatar-circle">P3</div>
+              <div class="avatar-glow"></div>
+            </div>
+            <span class="player-name">Player 3</span>
+          </div>
+          <div class="opponent-cards" data-seat="2"></div>
+          <span class="card-count-badge" data-seat="2"></span>
         </div>
       </div>
 
-      <div id="opponent-right" class="player-zone opponent right" data-seat="2">
-        <div class="avatar-container">
-          <span class="avatar-fallback" title="Đối thủ phải">P3</span>
-          <div class="timer-ring"></div>
-        </div>
-        <div class="card-count">🂠 4</div>
-      </div>
-
+      <!-- MY ZONE (BOTTOM) -->
       <div id="my-zone" class="player-zone bottom" data-seat="0">
         <div id="my-hand" class="hand-container"></div>
         <div class="my-footer">
-          <div class="avatar-container">
-            <span class="avatar-fallback" title="Bạn">Tôi</span>
-            <div class="timer-ring"></div>
+          <div class="player-info" data-seat="0">
+            <div class="avatar-wrap">
+              <div class="avatar-circle">Me</div>
+              <div class="avatar-glow"></div>
+            </div>
+            <span class="player-name">Bạn</span>
           </div>
-          <button type="button" id="btn-call-uno" class="hidden">UNO!</button>
+          <button type="button" id="btn-call-uno">UNO!</button>
         </div>
       </div>
 
+      <!-- COLOR PICKER MODAL -->
       <div id="color-picker-modal" class="hidden" role="dialog" aria-modal="true" aria-label="Chọn màu">
         <div class="color-wheel">
           <div class="color-slice red" data-color="red" role="button" tabindex="0" aria-label="Đỏ"></div>
@@ -77,7 +99,12 @@
           <div class="color-slice yellow" data-color="yellow" role="button" tabindex="0" aria-label="Vàng"></div>
         </div>
       </div>
+
+      <!-- Card flight animation layer -->
       <div id="card-motion-layer" aria-hidden="true"></div>
+
+      <!-- Action guide -->
+      <div id="action-guide" class="hidden"></div>
     </div>
   </div>
 
