@@ -1,145 +1,63 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>UNO — Đăng nhập</title>
-  <link rel="stylesheet" href="../css/login.css" />
-</head>
-<body>
-  <div class="login-container">
-    <div class="login-header">
-      <h1>🎴 UNO</h1>
-      <p>Trò chơi bài cổ điển trực tuyến</p>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>UNO — Đăng nhập & Đăng ký</title>
+    <link rel="stylesheet" href="../css/login.css" />
+  </head>
+  <body>
+    <div class="login-container">
+      <div class="login-header">
+        <h1>🎴 UNO</h1>
+        <p>Trò chơi bài trực tuyến</p>
+      </div>
+
+      <div class="tab-navigation">
+        <button class="tab-btn active" data-target="login">Đăng nhập</button>
+        <button class="tab-btn" data-target="register">Đăng ký</button>
+      </div>
+
+      <div class="login-content">
+        <form id="login-form" class="login-form tab-content active">
+          <div class="form-group">
+            <label for="login-username">Tên đăng nhập</label>
+            <input type="text" id="login-username" placeholder="Nhập tên đăng nhập" required minlength="3" maxlength="20" />
+          </div>
+          <div class="form-group">
+            <label for="login-password">Mật khẩu</label>
+            <input type="password" id="login-password" placeholder="Nhập mật khẩu" required minlength="3" />
+          </div>
+          <div class="message error-message" id="login-error"></div>
+          <button type="submit" class="btn-primary btn-full" id="btn-login">
+            <span class="btn-text">Đăng nhập</span>
+          </button>
+        </form>
+
+        <form id="register-form" class="login-form tab-content">
+          <div class="form-group">
+            <label for="reg-username">Tên đăng nhập mới</label>
+            <input type="text" id="reg-username" placeholder="Nhập tên đăng nhập" required minlength="3" maxlength="20" />
+          </div>
+          <div class="form-group">
+            <label for="reg-password">Mật khẩu</label>
+            <input type="password" id="reg-password" placeholder="Nhập mật khẩu" required minlength="3" />
+          </div>
+          <div class="message error-message" id="register-error"></div>
+          <button type="submit" class="btn-primary btn-full" id="btn-register">
+            <span class="btn-text">Đăng ký</span>
+          </button>
+        </form>
+
+        <div class="divider"><span>Hoặc</span></div>
+
+        <button type="button" class="btn-secondary btn-guest btn-full" id="btn-guest">
+          <span class="btn-text">👤 Chơi tạm thời (Khách)</span>
+          <span class="btn-loading" style="display: none"><span class="spinner-small"></span> Đang vào game...</span>
+        </button>
+      </div>
     </div>
 
-    <form id="login-form">
-      <div class="form-group">
-        <label for="username">Tên người chơi</label>
-        <input 
-          type="text" 
-          id="username" 
-          name="username" 
-          placeholder="Nhập tên của bạn"
-          required
-          minlength="2"
-          maxlength="20"
-        />
-        <div class="error-message" id="username-error"></div>
-      </div>
-
-      <div class="form-group">
-        <label for="password">Mật khẩu (tùy chọn)</label>
-        <input 
-          type="password" 
-          id="password" 
-          name="password" 
-          placeholder="Để trống nếu không cần"
-          maxlength="20"
-        />
-        <div class="error-message" id="password-error"></div>
-      </div>
-
-      <div class="login-options">
-        <button type="button" class="login-btn" id="btn-login">Đăng nhập</button>
-        <button type="button" class="login-btn btn-guest" id="btn-guest">Chơi tạm thời</button>
-      </div>
-
-      <div class="loading" id="loading-state">
-        <div class="spinner"></div>
-        Đang kết nối...
-      </div>
-
-      <div class="error-message" id="form-error"></div>
-      <div class="success-message" id="form-success"></div>
-    </form>
-  </div>
-
-  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" crossorigin="anonymous"></script>
-  <script>
-    document.getElementById('btn-login').addEventListener('click', async (e) => {
-      e.preventDefault();
-      const username = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value;
-
-      if (!username) {
-        document.getElementById('username-error').textContent = 'Vui lòng nhập tên người chơi';
-        document.getElementById('username-error').style.display = 'block';
-        return;
-      }
-
-      document.getElementById('username-error').style.display = 'none';
-      document.getElementById('password-error').style.display = 'none';
-      document.getElementById('form-error').style.display = 'none';
-
-      document.getElementById('loading-state').style.display = 'block';
-      document.getElementById('btn-login').disabled = true;
-      document.getElementById('btn-guest').disabled = true;
-
-      try {
-        // TODO: Send login request to backend
-        sessionStorage.setItem('username', username);
-        sessionStorage.setItem('loginType', 'authenticated');
-        
-        setTimeout(() => {
-          window.location.href = 'lobby.html';
-        }, 500);
-      } catch (error) {
-        document.getElementById('form-error').textContent = 'Đăng nhập thất bại. Vui lòng thử lại.';
-        document.getElementById('form-error').style.display = 'block';
-        document.getElementById('loading-state').style.display = 'none';
-        document.getElementById('btn-login').disabled = false;
-        document.getElementById('btn-guest').disabled = false;
-      }
-    });
-
-    document.getElementById('btn-guest').addEventListener('click', async (e) => {
-      e.preventDefault();
-      const username = document.getElementById('username').value.trim();
-
-      if (!username) {
-        document.getElementById('username-error').textContent = 'Vui lòng nhập tên người chơi';
-        document.getElementById('username-error').style.display = 'block';
-        return;
-      }
-
-      document.getElementById('username-error').style.display = 'none';
-      document.getElementById('loading-state').style.display = 'block';
-      document.getElementById('btn-login').disabled = true;
-      document.getElementById('btn-guest').disabled = true;
-
-      try {
-        // TODO: Send guest login request to backend
-        sessionStorage.setItem('username', username);
-        sessionStorage.setItem('loginType', 'guest');
-        
-        setTimeout(() => {
-          window.location.href = 'lobby.html';
-        }, 500);
-      } catch (error) {
-        document.getElementById('form-error').textContent = 'Không thể tiếp tục. Vui lòng thử lại.';
-        document.getElementById('form-error').style.display = 'block';
-        document.getElementById('loading-state').style.display = 'none';
-        document.getElementById('btn-login').disabled = false;
-        document.getElementById('btn-guest').disabled = false;
-      }
-    });
-
-    // Clear error messages on input
-    document.getElementById('username').addEventListener('input', () => {
-      document.getElementById('username-error').style.display = 'none';
-    });
-
-    document.getElementById('password').addEventListener('input', () => {
-      document.getElementById('password-error').style.display = 'none';
-    });
-
-    // Allow Enter key to submit login
-    document.getElementById('login-form').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter' && e.target.id === 'password') {
-        document.getElementById('btn-login').click();
-      }
-    });
-  </script>
-</body>
+    <script src="../js/login.js" defer></script>
+  </body>
 </html>

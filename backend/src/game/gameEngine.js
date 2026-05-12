@@ -17,7 +17,7 @@ function handleEvent(event) {
   // ===== PLAY CARD =====
   if (type === "play_card") {
 
-    // 1. check đúng lượt
+    // 1. check correct turn
     if (game.currentTurn !== playerId) {
       console.log("Not your turn")
       return
@@ -25,7 +25,7 @@ function handleEvent(event) {
 
     const hand = game.hand[playerId]
 
-    // 2. check có lá này trong tay
+    // 2. check if card is in hand
     const index = hand.findIndex(
       c => c.color === card.color && c.value === card.value
     )
@@ -35,25 +35,25 @@ function handleEvent(event) {
       return
     }
 
-    // 3. check hợp lệ
+    // 3. check validity
     if (!isValidMove(card, game.currentCard)) {
       console.log("Invalid move")
       return
     }
-    // ❗ rule riêng: draw2 không cho chồng draw4
+    // ❗ special rule: cannot stack draw2 on draw4
     if (game.currentCard.value === "draw4" && card.value === "draw2") {
         console.log("Cannot stack draw4 on draw2")
         return
     }
 
-    //4. check stack cong bai
+    // 4. check draw stack
     if (game.drawStack > 0) {
         if (card.value !== "draw2" && card.value !== "draw4") {
             console.log("Must respond to draw stack")
             return
         }
     }
-    // 5. check wild trước khi remove
+    // 5. check wild before removing
     if (card.color === "wild") {
 
         if (!chosenColor) {
