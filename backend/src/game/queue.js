@@ -6,11 +6,14 @@ function addEvent(event){
     queue.push(event)
 }
 
+
 function processQueue() {
-  while (queue.length > 0) {
-    let e = queue.shift()
-    handleEvent(e)
-  }
+    let lastGame = null
+    while (queue.length > 0) {
+        let e = queue.shift()
+        lastGame = handleEvent(e)  // ← handleEvent đã return game
+    }
+    return lastGame  // ← trả về game cuối cùng
 }
 
 

@@ -76,7 +76,7 @@ function handleEvent(event) {
     if (hand.length === 0) {
         game.status = "finished"
         console.log(playerId + " wins!")
-        return
+        return game
     }
 
     // 7. update current card
@@ -136,7 +136,7 @@ function handleEvent(event) {
             game.drawStack = 0
             nextTurn(game)
             updateGame(roomId, game)
-            return
+            return game
         }
 
         // ===== NORMAL DRAW =====
