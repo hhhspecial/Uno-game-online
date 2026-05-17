@@ -245,6 +245,7 @@ body::before {
   box-shadow: 0 3px 10px rgba(0,0,0,0.35);
   flex-shrink: 0; cursor: default;
   display: flex; align-items: center; justify-content: center;
+  font-family: 'Outfit', system-ui, sans-serif;
 }
 .card-front.red { background: var(--red); }
 .card-front.blue { background: var(--blue); }
@@ -272,6 +273,7 @@ body::before {
 .card-value {
   position: relative; z-index: 2;
   font-weight: 900; line-height: 1;
+  font-family: 'Outfit', system-ui, sans-serif;
   color: #1a1a1a;
   text-shadow: none;
 }
@@ -285,6 +287,7 @@ body::before {
 .card-corner {
   position: absolute; z-index: 3;
   font-weight: 800; font-size: 0.7rem; line-height: 1;
+  font-family: 'Outfit', system-ui, sans-serif;
   color: #1a1a1a;
 }
 .card-corner.top-left { top: 5px; left: 6px; }
@@ -427,6 +430,28 @@ body::before {
   margin-top: calc(var(--card-h) / -2);
   z-index: 10;
   box-shadow: 0 6px 20px rgba(0,0,0,0.45);
+}
+
+/* Draw stack badge */
+.draw-stack-badge {
+  position: absolute;
+  top: -12px; right: -12px;
+  z-index: 20;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #fff;
+  font-family: 'Outfit', system-ui, sans-serif;
+  font-weight: 900;
+  font-size: 1.3rem;
+  min-width: 42px; height: 42px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 3px 12px rgba(239,68,68,0.6);
+  border: 3px solid #fff;
+  animation: stack-pulse 0.8s ease-in-out infinite alternate;
+}
+@keyframes stack-pulse {
+  from { transform: scale(1); }
+  to   { transform: scale(1.12); }
 }
 
 /* ===== MY ZONE (BOTTOM) ===== */

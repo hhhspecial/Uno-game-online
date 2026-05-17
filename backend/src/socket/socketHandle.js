@@ -1,4 +1,4 @@
-const { bind, unbind, getPlayerId, getRoomId } = require('../utils/playerMap')
+const { bind, unbind, getPlayerId, getRoomId, getSocketId } = require('../utils/playerMap')
 const { addEvent, processQueue } = require('../game/queue')
 const { getGame } = require('../game/gameState')
 
@@ -47,6 +47,15 @@ function setupSocket(io) {
                 delete reconnectTimers[playerId]
                 console.log(playerId, 'reconnected')
             }
+
+            // Gửi game state hiện tại cho player vừa connect/reconnect
+            const game = getGame(roomId)
+            if (game) {
+                socket.emit('game_update', {
+                    type: 'game_update',
+                    game: sanitize(game, playerId)
+                })
+            }
         })
 
         socket.on('play_card', ({ card, chosenColor }) => {
@@ -58,7 +67,7 @@ function setupSocket(io) {
             const game = processQueue()
 
             if (game) {
-                io.to(roomId).emit('game_update', { type: 'game_update', game: sanitize(game, playerId) })
+                broadcastGame(io, game)
             }
         })
 
@@ -71,7 +80,7 @@ function setupSocket(io) {
             const game = processQueue()
 
             if (game) {
-                io.to(roomId).emit('game_update', { type: 'game_update', game: sanitize(game, playerId) })
+                broadcastGame(io, game)
             }
         })
 
@@ -87,6 +96,20 @@ function setupSocket(io) {
                 console.log(playerId, 'timed out, removing from room', roomId)
                 delete reconnectTimers[playerId]
             }, RECONNECT_TIMEOUT)
+        })
+    })
+}
+
+// Gửi game state riêng cho từng player (mỗi người thấy bài của mình)
+function broadcastGame(io, game) {
+    game.players.forEach(player => {
+        const sid = getSocketId(player.id)
+        if (!sid) return
+        const s = io.sockets.sockets.get(sid)
+        if (!s) return
+        s.emit('game_update', {
+            type: 'game_update',
+            game: sanitize(game, player.id)
         })
     })
 }

@@ -5,6 +5,8 @@
   var params = new URLSearchParams(window.location.search);
   var SOCKET_URL = params.get("server") || "http://localhost:3000";
   var USE_MOCK = params.get("mock") !== "0";
+  var MY_PLAYER_ID = params.get("playerId") || "";
+  var MY_ROOM_ID = params.get("roomId") || "";
 
   var socket = null;
   var lastServerState = null;
@@ -94,11 +96,23 @@
     return false;
   }
 
-  function getPlayableIndices(hand, topCard, currentColor) {
+  function getPlayableIndices(hand, topCard, currentColor, drawStack) {
     var indices = [];
     if (!hand || !topCard) return indices;
     for (var i = 0; i < hand.length; i++) {
-      if (isValidMove(hand[i], topCard, currentColor)) indices.push(i);
+      var card = hand[i];
+      // When drawStack is active, only +2 or +4 can be played
+      if (drawStack && drawStack > 0) {
+        var topIsD4 = topCard.value === "draw4";
+        if (card.value === "draw4") {
+          indices.push(i); // +4 can always stack
+        } else if (card.value === "draw2" && !topIsD4) {
+          // +2 can stack on +2 but NOT on +4
+          if (isValidMove(card, topCard, currentColor)) indices.push(i);
+        }
+      } else {
+        if (isValidMove(card, topCard, currentColor)) indices.push(i);
+      }
     }
     return indices;
   }
@@ -163,6 +177,7 @@
       direction: 1,
       currentColor: "red",
       topCard: { color: "red", value: "7" },
+      drawStack: 0,
       myHand: [
         { color: "red", value: "3" },
         { color: "blue", value: "skip" },
@@ -222,6 +237,14 @@
     var top = createCardFront(state.topCard);
     top.classList.add("on-discard");
     pile.appendChild(top);
+
+    // Stack badge: show +N when drawStack is active
+    if (state.drawStack > 0) {
+      var badge = document.createElement("div");
+      badge.className = "draw-stack-badge";
+      badge.textContent = "+" + state.drawStack;
+      pile.appendChild(badge);
+    }
   }
 
   /* ========== RENDER: DRAW PILE (ALL FACE-DOWN) ========== */
@@ -339,7 +362,7 @@
 
     var isMyTurn = state.currentSeat === state.mySeat;
     var playableIndices = isMyTurn && !state.mustChooseColor
-      ? getPlayableIndices(state.myHand, state.topCard, state.currentColor)
+      ? getPlayableIndices(state.myHand, state.topCard, state.currentColor, state.drawStack)
       : [];
     var hasPlayable = playableIndices.length > 0;
 
@@ -395,13 +418,21 @@
   function renderDrawGuide(isMyTurn, hasPlayable) {
     var drawPile = el("draw-pile");
     var guide = el("action-guide");
+    var mustDraw = isMyTurn && state.drawStack > 0 && !hasPlayable;
+    var canStackOrDraw = isMyTurn && state.drawStack > 0 && hasPlayable;
 
     if (drawPile) {
-      drawPile.classList.toggle("draw-guide", isMyTurn && !hasPlayable && !state.mustChooseColor && !motionLock);
+      drawPile.classList.toggle("draw-guide", isMyTurn && (!hasPlayable || mustDraw) && !state.mustChooseColor && !motionLock);
     }
 
     if (guide) {
-      if (isMyTurn && !hasPlayable && !state.mustChooseColor && !motionLock) {
+      if (mustDraw && !state.mustChooseColor && !motionLock) {
+        guide.textContent = "⚠️ Phải bốc +" + state.drawStack + " lá! Nhấn chồng bài để bốc.";
+        guide.classList.remove("hidden");
+      } else if (canStackOrDraw && !state.mustChooseColor) {
+        guide.textContent = "🔥 Có thể chồng +2/+4 hoặc bốc +" + state.drawStack + " lá!";
+        guide.classList.remove("hidden");
+      } else if (isMyTurn && !hasPlayable && !state.mustChooseColor && !motionLock) {
         guide.textContent = "🃏 Không có lá hợp lệ — Nhấn vào chồng bài để bốc!";
         guide.classList.remove("hidden");
       } else if (isMyTurn && hasPlayable && !state.mustChooseColor) {
@@ -532,8 +563,26 @@
   }
 
   function onPlayCard(index, card) {
-    emitOrLog("play_card", { index: index, card: card });
-    if (!USE_MOCK) return;
+    if (!USE_MOCK) {
+      // In live mode, for wild cards we wait for color choice first
+      if (isWildCard(card)) {
+        pendingWild = { index: index, card: card };
+        state.mustChooseColor = true;
+        render();
+        return;
+      }
+      // Non-wild: emit immediately, let backend handle state
+      emitOrLog("play_card", { card: { color: card.color, value: card.value } });
+      // Animate locally while waiting for server
+      SFX.playCard();
+      var btn = getHandCardButton(index);
+      var discard = el("discard-pile");
+      if (btn && discard) {
+        btn.classList.add("is-leaving");
+        animateCardFlight(btn.getBoundingClientRect(), discard.getBoundingClientRect(), btn, { duration: 400 });
+      }
+      return;
+    }
     if (motionLock) return;
 
     SFX.playCard();
@@ -573,6 +622,27 @@
   }
 
   function onChooseColor(color) {
+    if (!USE_MOCK && pendingWild) {
+      // Live mode: emit play_card with chosenColor, let server handle
+      var pw = pendingWild;
+      pendingWild = null;
+      state.mustChooseColor = false;
+      emitOrLog("play_card", {
+        card: { color: pw.card.color, value: pw.card.value },
+        chosenColor: color
+      });
+      // Animate locally while waiting
+      SFX.playCard();
+      var btn = getHandCardButton(pw.index);
+      var discard = el("discard-pile");
+      if (btn && discard) {
+        btn.classList.add("is-leaving");
+        animateCardFlight(btn.getBoundingClientRect(), discard.getBoundingClientRect(), btn, { duration: 400 });
+      }
+      render();
+      return;
+    }
+
     emitOrLog("choose_color", { color: color });
     if (!USE_MOCK) return;
 
@@ -641,7 +711,10 @@
   /* ========== DRAW CARD ========== */
   function performDraw() {
     emitOrLog("draw_card", {});
-    if (!USE_MOCK) return;
+    if (!USE_MOCK) {
+      SFX.drawCard();
+      return;
+    }
     if (motionLock || state.mustChooseColor) return;
 
     SFX.drawCard();
@@ -716,27 +789,120 @@
     badge.textContent = USE_MOCK ? "UI mẫu (mock)" : "Socket.IO";
   }
 
+  /* ========== RECEIVE SERVER STATE ========== */
   function applyServerPayload(payload) {
     lastServerState = payload;
     if (!payload || typeof payload !== "object") return;
     var incoming = payload.game || payload;
+    if (!incoming) return;
 
-    // Map server state to our state format
-    if (incoming.currentCard) state.topCard = incoming.currentCard;
-    if (incoming.currentTurn !== undefined) {
-      // Server uses player IDs, we use seat indices - adapter needed
-      state.currentSeat = incoming.currentSeat || 0;
+    console.log("[server] game_update received:", incoming);
+
+    // Track previous hand size for draw animation
+    var prevHandSize = (state.myHand || []).length;
+
+    // --- Top card & current color ---
+    if (incoming.currentCard) {
+      var cc = incoming.currentCard;
+      var wasWild = cc.value === "wild" || cc.value === "draw4";
+      if (wasWild) {
+        state.topCard = { color: cc.color, value: cc.value, _wildChosen: true };
+      } else {
+        state.topCard = { color: cc.color, value: cc.value };
+      }
+      state.currentColor = cc.color;
     }
-    if (incoming.direction !== undefined) state.direction = incoming.direction;
-    if (incoming.hand) {
-      // Server sends hand as { playerId: cards[] }
-      // Frontend adapter will need to map this
-      state.myHand = incoming.myHand || state.myHand;
+
+    // --- Direction ---
+    if (incoming.direction !== undefined) {
+      state.direction = incoming.direction;
     }
-    if (incoming.currentColor) state.currentColor = incoming.currentColor;
-    if (incoming.opponents) state.opponents = incoming.opponents;
+
+    // --- Draw stack ---
+    state.drawStack = incoming.drawStack || 0;
+
+    // --- My hand ---
+    if (incoming.hand && incoming.hand[MY_PLAYER_ID]) {
+      state.myHand = incoming.hand[MY_PLAYER_ID];
+    }
+
+    // --- Current turn → map to seat index ---
+    if (incoming.currentTurn && incoming.players) {
+      var players = incoming.players;
+      var myIdx = players.findIndex(function (p) { return p.id === MY_PLAYER_ID; });
+      var turnIdx = players.findIndex(function (p) { return p.id === incoming.currentTurn; });
+
+      if (myIdx === -1) myIdx = 0;
+      if (turnIdx === -1) turnIdx = 0;
+
+      var relPos = (turnIdx - myIdx + players.length) % players.length;
+      var relToSeat = [0, 3, 1, 2];
+      state.currentSeat = relToSeat[relPos] !== undefined ? relToSeat[relPos] : 0;
+      state.mySeat = 0;
+    }
+
+    // --- Opponents (clockwise from me: left → top → right) ---
+    if (incoming.players && incoming.hand) {
+      var oppSeatMap = [3, 1, 2]; // left, top, right
+      var players = incoming.players;
+      var myIdx = players.findIndex(function (p) { return p.id === MY_PLAYER_ID; });
+      if (myIdx === -1) myIdx = 0;
+      var seatI = 0;
+      state.opponents = [];
+      for (var i = 1; i < players.length; i++) {
+        var pi = (myIdx + i) % players.length;
+        var p = players[pi];
+        var oppHand = incoming.hand[p.id] || [];
+        state.opponents.push({
+          seat: oppSeatMap[seatI] !== undefined ? oppSeatMap[seatI] : seatI + 1,
+          name: p.name || p.id,
+          count: oppHand.length
+        });
+        seatI++;
+      }
+    }
+
+    // --- UNO button ---
+    state.unoButtonVisible = state.myHand && state.myHand.length === 1;
+    state.mustChooseColor = false;
+    pendingWild = null;
+    motionLock = false;
 
     render();
+
+    // --- Draw animation: if hand grew, animate cards from draw pile ---
+    var newHandSize = (state.myHand || []).length;
+    var cardsDrawn = newHandSize - prevHandSize;
+    if (cardsDrawn > 0) {
+      animateDrawFromPile(cardsDrawn);
+    }
+
+    SFX.turnChange();
+  }
+
+  /* ========== DRAW ANIMATION (live mode) ========== */
+  function animateDrawFromPile(count) {
+    var drawPile = el("draw-pile");
+    var hand = el("my-hand");
+    if (!drawPile || !hand) return;
+
+    var fromRect = drawPile.getBoundingClientRect();
+    var hb = hand.getBoundingClientRect();
+    var targetRect = {
+      left: hb.left + hb.width / 2 - 40,
+      top: hb.top + 10,
+      width: 80, height: 120
+    };
+
+    for (var i = 0; i < Math.min(count, 10); i++) {
+      (function (delay) {
+        setTimeout(function () {
+          SFX.drawCard();
+          var cardEl = createCardBack(false);
+          animateCardFlight(fromRect, targetRect, cardEl, { duration: 300 });
+        }, delay * 100);
+      })(i);
+    }
   }
 
   /* ========== WIRE UI ========== */
@@ -776,13 +942,23 @@
       setSocketStatus(USE_MOCK ? "Mock — thêm ?mock=0 để kết nối" : "Thiếu Socket.IO");
       return;
     }
+    if (!MY_PLAYER_ID || !MY_ROOM_ID) {
+      setSocketStatus("Thiếu playerId hoặc roomId trong URL");
+      return;
+    }
     setSocketStatus("Đang kết nối… " + SOCKET_URL);
     socket = io(SOCKET_URL, { transports: ["websocket", "polling"] });
 
-    socket.on("connect", function () { setSocketStatus("Đã kết nối: " + socket.id); });
+    socket.on("connect", function () {
+      setSocketStatus("Đã kết nối: " + socket.id);
+      // Gửi auth để backend bind socket → player → room
+      socket.emit("auth", { playerId: MY_PLAYER_ID, roomId: MY_ROOM_ID });
+      console.log("[socket] auth sent:", MY_PLAYER_ID, MY_ROOM_ID);
+    });
     socket.on("disconnect", function (r) { setSocketStatus("Ngắt: " + r); });
     socket.on("connect_error", function (e) { setSocketStatus("Lỗi: " + (e && e.message || "?")); });
 
+    // Listen for game state from backend
     ["game_state", "state", "room:state", "game_update"].forEach(function (ev) {
       socket.on(ev, applyServerPayload);
     });

@@ -7,10 +7,12 @@ function addEvent(event){
 }
 
 function processQueue() {
+  let result = null
   while (queue.length > 0) {
     let e = queue.shift()
-    handleEvent(e)
+    result = handleEvent(e)
   }
+  return result
 }
 
 

@@ -136,7 +136,7 @@ function handleEvent(event) {
             game.drawStack = 0
             nextTurn(game)
             updateGame(roomId, game)
-            return
+            return game
         }
 
         // ===== NORMAL DRAW =====
