@@ -2,7 +2,7 @@ const { createDeck, shuffle } = require("./deck")
 
 let games = {}
 
-function createGame(players, roomId){
+function createGame(roomId, players){
 
   let deck = shuffle(createDeck())
   let hand ={}

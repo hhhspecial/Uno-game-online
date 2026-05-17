@@ -2,7 +2,7 @@ const { bind, unbind, getPlayerId, getRoomId, getSocketId } = require('../utils/
 const { addEvent, processQueue } = require('../game/queue')
 const { getGame } = require('../game/gameState')
 
-// ⬇️ Phần này Back2 sẽ bổ sung sau
+// ⬇️ Back2 will add this part later
 // const { getPlayer } = require('../auth/guestHandle')
 // const { removePlayer } = require('../lobby/roomManager')
 
@@ -33,22 +33,22 @@ function setupSocket(io) {
 
         })
 
-        // Client gửi playerId + roomId ngay sau khi connect
+        // Client sends playerId + roomId right after connecting
         socket.on('auth', ({ playerId, roomId }) => {
-            // TODO: Back2 thêm validate getPlayer(playerId) ở đây
+            // TODO: Back2 add validate getPlayer(playerId) here
             console.log('AUTH received:', playerId, roomId)
             bind(socket.id, playerId, roomId)
-            socket.join(roomId) // join socket room để broadcast
+            socket.join(roomId) // join socket room for broadcast
             console.log('Bind OK, rooms:', socket.rooms)
 
-            // Hủy reconnect timer nếu đang chờ
+            // Cancel reconnect timer if waiting
             if (reconnectTimers[playerId]) {
                 clearTimeout(reconnectTimers[playerId])
                 delete reconnectTimers[playerId]
                 console.log(playerId, 'reconnected')
             }
 
-            // Gửi game state hiện tại cho player vừa connect/reconnect
+            // Send current game state to player on connect/reconnect
             const game = getGame(roomId)
             if (game) {
                 socket.emit('game_update', {
@@ -92,7 +92,7 @@ function setupSocket(io) {
             unbind(socket.id)
 
             reconnectTimers[playerId] = setTimeout(() => {
-                // TODO: Back2 bổ sung removePlayer(roomId, playerId)
+                // TODO: Back2 add removePlayer(roomId, playerId)
                 console.log(playerId, 'timed out, removing from room', roomId)
                 delete reconnectTimers[playerId]
             }, RECONNECT_TIMEOUT)
@@ -100,7 +100,7 @@ function setupSocket(io) {
     })
 }
 
-// Gửi game state riêng cho từng player (mỗi người thấy bài của mình)
+// Send game state individually to each player (each sees their own hand)
 function broadcastGame(io, game) {
     game.players.forEach(player => {
         const sid = getSocketId(player.id)
@@ -114,13 +114,13 @@ function broadcastGame(io, game) {
     })
 }
 
-// Ẩn bài của người khác trước khi gửi về client
+// Hide other players' cards before sending to client
 function sanitize(game, currentPlayerId) {
     const sanitized = { ...game, hand: {} }
     for (const [pid, cards] of Object.entries(game.hand)) {
         sanitized.hand[pid] = pid === currentPlayerId
-            ? cards                    // bài của mình → gửi đầy đủ
-            : cards.map(() => ({}))    // bài người khác → chỉ gửi số lượng
+            ? cards                    // my cards → send full
+            : cards.map(() => ({}))    // others' cards → send count only
     }
     return sanitized
 }
