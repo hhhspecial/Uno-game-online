@@ -1,0 +1,12 @@
+    Auth REST API:
+POST /auth/guest - Create a new guest user and return their info
+POST /auth/register - Register a new user with username and password
+POST /auth/login - Login with username and password
+
+    Lobby REST API:
+GET    /lobby/rooms - List all waiting rooms
+POST   /lobby/rooms - Create a new room
+POST   /lobby/rooms/quick-join - Quick join a waiting room or create if none available
+GET    /lobby/rooms/:roomId - Get details of a specific room
+POST   /lobby/rooms/:roomId/join - Join a specific room
+DELETE /lobby/rooms/:roomId/players/:playerId - Leave a room

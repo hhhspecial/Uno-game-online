@@ -1,0 +1,21 @@
+    Socket event flow:
+Client connects → emits 'auth' with playerId and roomId 
+→ server validates and binds socket to player and room, and returns initial data 
+→ client can emit lobby events (get rooms, create/join/quick join/leave room) and game events (play card, draw card) 
+→ on lobby events, server updates room and emits room update and lobby rooms update to all clients 
+→ on game events, server processes game logic and emits game update to all players in the room 
+→ if client disconnects, start a timer for possible reconnection 
+→ if client reconnects with 'auth:restore' before timer expires, clear timer and restore session 
+→ if timer expires before reconnection, remove player from room and emit updates
+
+
+    Socket event list:
+'auth' - Authenticate and bind socket to player and room
+'auth:restore' - Restore session if reconnecting within timeout
+'lobby:get_rooms' - Get list of waiting rooms
+'lobby:create' - Create a new room
+'lobby:quick' - Quick join a waiting room or create if none available
+'lobby:join' - Join a specific room
+'lobby:leave' - Leave current room
+'play_card' - Play a card in the game
+'draw_card' - Draw a card in the game
