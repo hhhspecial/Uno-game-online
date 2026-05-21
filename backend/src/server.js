@@ -22,14 +22,14 @@ app.use(express.json());
 // Serve frontend files
 app.use('/frontend', express.static(path.join(__dirname, '../../frontend')));
 
-const authRouter = require('./auth'); 
+const authRouter = require('./auth');
 app.use('/auth', authRouter);
 
 const lobbyRouter = require('./lobby');
 app.use('/lobby', lobbyRouter);
 
 app.get('/ping', (req, res) => {
-    res.json({status: 'UNO Server is running'});
+    res.json({ status: 'UNO Server is running' });
 });
 
 // ===== TEST ENDPOINT: tạo game 4 người để test =====
@@ -45,18 +45,18 @@ app.get('/test-game', (req, res) => {
     const game = createGame(roomId, players);
 
     // Lưu players vào users store để auth không bị null
-players.forEach(p => {
-    users[p.id] = { ...p, isGuest: true };
-});
+    players.forEach(p => {
+        users[p.id] = { ...p, isGuest: true };
+    });
 
-// Lưu room vào rooms store để authenticateSocket tìm được
-rooms[roomId] = {
-    id: roomId,
-    players,
-    maxPlayers: 4,
-    status: 'playing',
-    createdAt: Date.now()
-};
+    // Lưu room vào rooms store để authenticateSocket tìm được
+    rooms[roomId] = {
+        id: roomId,
+        players,
+        maxPlayers: 4,
+        status: 'playing',
+        createdAt: Date.now()
+    };
 
     console.log('Test game created:', roomId, 'Players:', players.map(p => p.id));
 
@@ -83,7 +83,7 @@ rooms[roomId] = {
 
     links.forEach((l, i) => {
         html += `<div class="player">
-            <strong>Player ${i+1}: ${l.name}</strong> (${l.id})<br>
+            <strong>Player ${i + 1}: ${l.name}</strong> (${l.id})<br>
             <a href="${l.url}" target="_blank">▶ Mở game tab</a>
         </div>`;
     });

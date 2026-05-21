@@ -1,6 +1,6 @@
 const {
-    bind,
-    unbind,
+    bindPlayerSocket,
+    unbindSocket,
     getPlayerId,
     getRoomId,
     getSocketId
@@ -13,7 +13,8 @@ const {
     getRoom,
     removePlayer,
     toPublicRoom,
-    getPublicWaitingRooms
+    getPublicWaitingRooms,
+    findRoomByPlayer
 } = require('../lobby/roomManager')
 
 const {
@@ -31,6 +32,49 @@ const { getPlayer } = require('../auth/guestHandle');
 const RECONNECT_TIMEOUT = 30_000
 const reconnectTimers = {}
 
+// Socket event list:
+// 'auth' - Authenticate and bind socket to player and room
+// 'auth:restore' - Restore session if reconnecting within timeout
+// 'lobby:get_rooms' - Get list of waiting rooms
+// 'lobby:create' - Create a new room
+// 'lobby:quick' - Quick join a waiting room or create if none available
+// 'lobby:join' - Join a specific room
+// 'lobby:leave' - Leave current room
+// 'play_card' - Play a card in the game
+// 'draw_card' - Draw a card in the game
+
+function isNonEmptyString(value) {
+    return typeof value === 'string' && value.trim().length > 0;
+}
+
+function requirePlayerId(playerId) {
+    if (!isNonEmptyString(playerId)) {
+        return { 
+            ok: false, 
+            error: 'Player ID is required' 
+        };
+    }
+
+    return { ok: true };
+}
+
+function requireRoomId(roomId) {
+    if (!isNonEmptyString(roomId)) {
+        return { 
+            ok: false, 
+            error: 'Room ID is required' 
+        };
+    }
+
+    return { ok: true };
+}
+
+function isValidCardPayload(card) {
+    return card && 
+        isNonEmptyString(card.color) && 
+        isNonEmptyString(card.value);  
+}
+
 function emitLobbyRooms(io) {
     io.emit('lobby_rooms', {
         type: 'lobby_rooms',
@@ -43,6 +87,24 @@ function emitRoomUpdate(io, room) {
         type: 'room_update',
         room: toPublicRoom(room)
     });
+}
+
+function replaceOldSocket(io, oldSocketId, newSocketId){
+    if(!oldSocketId || oldSocketId === newSocketId) {
+        return;
+    }
+
+    const oldSocket = io.sockets.sockets.get(oldSocketId);
+    if (!oldSocket) {
+        return;
+    }
+    
+    oldSocket.emit('session:replaced', {
+        type: 'session:replaced',
+        reason: 'same_player_connected_elsewhere'
+    });
+
+    oldSocket.disconnect(true);
 }
 
 function emitGameToPlayers(io, game) {
@@ -76,7 +138,7 @@ function startGameIfReady(io, room) {
     return game;
 }
 
-function authenticateSocket(socket, playerId, roomId) {
+function authenticateSocket(socket, playerId, roomId) { // validate player and room existence and bind socket to player
     const player = getPlayer(playerId);
     if (!player) {
         return { ok: false, error: 'Player not found' };
@@ -92,7 +154,7 @@ function authenticateSocket(socket, playerId, roomId) {
         return { ok: false, error: 'Player not in room' };
     }
 
-    bind(socket.id, playerId, roomId)
+    const oldSocketId = bindPlayerSocket(socket.id, playerId, roomId);
     socket.join(roomId) // join socket room for broadcast
 
     if (reconnectTimers[playerId]) {
@@ -100,20 +162,40 @@ function authenticateSocket(socket, playerId, roomId) {
         delete reconnectTimers[playerId];
     }
 
-    return { ok: true, player, room };
+    return { 
+        ok: true, 
+        player, 
+        room,
+        oldSocketId
+    };
 
 }
+
 
 function setupSocket(io) {
     io.on('connection', socket => {
         console.log(`Socket connected: ${socket.id}`)
 
-        socket.on('auth', ({ playerId, roomId }, callback) => {
+        
+        // Client can emit 'auth' to validate their playerId and roomId and bind their socket to their player
+        socket.on('auth', ({ playerId, roomId } = {}, callback) => {
+            const playerCheck = requirePlayerId(playerId);
+            if (!playerCheck.ok) {
+                return callback?.(playerCheck);
+            }
+
+            const roomCheck = requireRoomId(roomId);
+            if (!roomCheck.ok) {
+                return callback?.(roomCheck);
+            }
+
             const result = authenticateSocket(socket, playerId, roomId)
 
             if (!result.ok) {
                 return callback?.(result);
             }
+
+            replaceOldSocket(io, result.oldSocketId, socket.id);
 
             const game = getGame(roomId);
             if (game) {
@@ -125,10 +207,63 @@ function setupSocket(io) {
 
             callback?.({
                 ok: true,
+                player: result.player,
                 room: toPublicRoom(result.room),
+                game: game ? sanitize(game, playerId) : null
             });
         });
 
+        // If client gets disconnected, they can emit 'auth:restore' with the same playerId to restore their session if they reconnect within RECONNECT_TIMEOUT
+        socket.on('auth:restore', ({ playerId } = {}, callback) => {
+            const playerCheck = requirePlayerId(playerId);
+            if (!playerCheck.ok) {
+                return callback?.(playerCheck);
+            }
+
+            const player = getPlayer(playerId);
+
+            if (!player) {
+                return callback?.({
+                    ok:false,
+                    error: 'Player not found'
+                });
+            }
+
+            const room = findRoomByPlayer(playerId);
+            const roomId = room ? room.id : null;
+
+            const oldSocketId = bindPlayerSocket(socket.id, playerId, roomId);
+            replaceOldSocket(io, oldSocketId, socket.id);
+
+            if (room) {
+                socket.join(room.id);
+
+                if(reconnectTimers[playerId]) {
+                    clearTimeout(reconnectTimers[playerId]);
+                    delete reconnectTimers[playerId];
+                }
+
+                emitRoomUpdate(io, room);
+                emitLobbyRooms(io);
+            }
+
+            const game = room ? getGame(room.id) : null;
+            callback?.({
+                ok: true,
+                player,
+                room: room ? toPublicRoom(room) : null,
+                game: game ? sanitize(game, playerId) : null
+            });
+        
+            if (game) {
+                socket.emit('game_update', {
+                    type: 'game_update',
+                    game: sanitize(game, playerId)
+                });
+            }
+        });
+
+        // Lobby events
         socket.on('lobby:get_rooms', (payload, callback) => {
             const rooms = getPublicWaitingRooms();
 
@@ -143,15 +278,33 @@ function setupSocket(io) {
             });
         });
 
-        socket.on('lobby:create', ({ playerId }, callback) => {
-            const player = getPlayer(playerId);
-            if (!player) {
-                return callback?.({ ok: false, error: 'Player not found' });
+        // Create, join, quick join, leave lobby events. On success, bind socket to player and room, and emit room update and lobby rooms update to all clients
+        socket.on('lobby:create', ({ playerId, name, maxPlayers } = {}, callback) => {
+            const playerCheck = requirePlayerId(playerId);
+            if (!playerCheck.ok) {
+                return callback?.(playerCheck);
             }
 
-            const room = createRoom(player);
+            const player = getPlayer(playerId);
+            if (!player) {
+                return callback?.({ 
+                    ok: false, 
+                    error: 'Player not found' 
+                });
+            }
 
-            bind(socket.id, playerId, room.id);
+            const result = createRoom(player, { name, maxPlayers });
+            if (!result.ok) {
+                return callback?.({ 
+                    ok: false, 
+                    error: result.error,
+                    room: result.room ? toPublicRoom(result.room) : null
+                });
+            }
+
+            const room = result.room;
+            const oldSocketId = bindPlayerSocket(socket.id, playerId, room.id);
+            replaceOldSocket(io, oldSocketId, socket.id);
             socket.join(room.id);
 
             callback?.({
@@ -163,19 +316,32 @@ function setupSocket(io) {
             emitLobbyRooms(io);
         });
 
-        socket.on('lobby:quick', ({ playerId }, callback) => {
+        socket.on('lobby:quick', ({ playerId } = {}, callback) => {
+            const playerCheck = requirePlayerId(playerId);
+            if (!playerCheck.ok) {
+                return callback?.(playerCheck);
+            }
+
             const player = getPlayer(playerId);
             if (!player) {
-                return callback?.({ ok: false, error: 'Player not found' });
+                return callback?.({ 
+                    ok: false, 
+                    error: 'Player not found' 
+                });
             }
 
             const result = quickJoin(player);
             if (!result.ok) {
-                return callback?.({ ok: false, error: result.error });
+                return callback?.({ 
+                    ok: false, 
+                    error: result.error,
+                    room: result.room ? toPublicRoom(result.room) : null
+                });
             }
 
             const room = result.room;
-            bind(socket.id, playerId, room.id);
+            const oldSocketId = bindPlayerSocket(socket.id, playerId, room.id);
+            replaceOldSocket(io, oldSocketId, socket.id);
             socket.join(room.id);
 
             callback?.({
@@ -188,19 +354,37 @@ function setupSocket(io) {
             startGameIfReady(io, room);
         });
 
-        socket.on('lobby:join', ({ playerId, roomId }, callback) => {
+        socket.on('lobby:join', ({ playerId, roomId } = {}, callback) => {
+            const playerCheck = requirePlayerId(playerId);
+            if (!playerCheck.ok) {
+                return callback?.(playerCheck);
+            }
+
+            const roomCheck = requireRoomId(roomId);
+            if (!roomCheck.ok) {
+                return callback?.(roomCheck);
+            }
+
             const player = getPlayer(playerId);
             if (!player) {
-                return callback?.({ ok: false, error: 'Player not found' });
+                return callback?.({ 
+                    ok: false, 
+                    error: 'Player not found' 
+                });
             }
 
             const result = joinRoom(roomId, player);
             if (!result.ok) {
-                return callback?.({ ok: false, error: result.error });
+                return callback?.({ 
+                    ok: false, 
+                    error: result.error,
+                    room: result.room ? toPublicRoom(result.room) : null
+                });
             }
 
             const room = result.room;
-            bind(socket.id, playerId, room.id);
+            const oldSocketId = bindPlayerSocket(socket.id, playerId, room.id);
+            replaceOldSocket(io, oldSocketId, socket.id);
             socket.join(room.id);
 
             callback?.({
@@ -217,12 +401,15 @@ function setupSocket(io) {
             const playerId = getPlayerId(socket.id);
             const roomId = getRoomId(socket.id);
             if (!playerId || !roomId) {
-                return callback?.({ ok: false, error: 'Not in a room' });
+                return callback?.({ 
+                    ok: false, 
+                    error: 'Not in a room' 
+                });
             }
 
             const updatedRoom = removePlayer(roomId, playerId);
             socket.leave(roomId);
-            unbind(socket.id)
+            unbindSocket(socket.id)
 
             if (!updatedRoom) {
                 callback?.({
@@ -242,12 +429,23 @@ function setupSocket(io) {
             emitLobbyRooms(io);
         });
 
-        socket.on('play_card', ({ card, chosenColor }, callback) => {
+        // Game events. On success, add event to game queue and process. Then emit game update to all players in the room
+        socket.on('play_card', ({ card, chosenColor } = {}, callback) => {
             const playerId = getPlayerId(socket.id);
             const roomId = getRoomId(socket.id);
 
             if (!playerId || !roomId) {
-                return callback?.({ ok: false, error: 'Not in a game' });
+                return callback?.({ 
+                    ok: false, 
+                    error: 'Not in a game' 
+                });
+            }
+
+            if (!isValidCardPayload(card)) {
+                return callback?.({ 
+                    ok: false, 
+                    error: 'Valid card is required' 
+                });
             }
 
             addEvent({
@@ -262,19 +460,25 @@ function setupSocket(io) {
 
             const game = processQueue();
             if (!game) {
-                return callback?.({ ok: false, error: 'Game not found' });
+                return callback?.({ 
+                    ok: false, 
+                    error: 'Game not found' 
+                });
             }
 
             emitGameToPlayers(io, game);
             callback?.({ ok: true });
         });
 
-        socket.on('draw_card', (payload, callback) => {
+        socket.on('draw_card', (payload = {}, callback) => {
             const playerId = getPlayerId(socket.id);
             const roomId = getRoomId(socket.id);
 
             if (!playerId || !roomId) {
-                return callback?.({ ok: false, error: 'Not in a game' });
+                return callback?.({ 
+                    ok: false, 
+                    error: 'Not in a game' 
+                });
             }
             addEvent({
                 type: 'draw_card',
@@ -286,19 +490,23 @@ function setupSocket(io) {
 
             const game = processQueue();
             if (!game) {
-                return callback?.({ ok: false, error: 'Game not found' });
+                return callback?.({ 
+                    ok: false, 
+                    error: 'Game not found' 
+                });
             }
             emitGameToPlayers(io, game);
             callback?.({ ok: true });
         });
 
+        // Handle client disconnect. Start a timer to wait for possible reconnection within RECONNECT_TIMEOUT. If timer expires, remove player from room and emit updates. If player reconnects with 'auth:restore' before timer expires, clear the timer and restore their session
         socket.on('disconnect', () => {
             const playerId = getPlayerId(socket.id);
             const roomId = getRoomId(socket.id);
 
             if (!playerId || !roomId) return;
 
-            unbind(socket.id)
+            unbindSocket(socket.id);
 
             reconnectTimers[playerId] = setTimeout(() => {
                 const updatedRoom = removePlayer(roomId, playerId);
@@ -335,6 +543,8 @@ function setupSocket(io) {
         });
     });
 }
+
+// Sanitize game state before sending to clients. Players can only see the count of other players' cards, but can see their own cards
 function sanitize(game, currentPlayerId) {
     const sanitized = {
         roomId: game.roomId,

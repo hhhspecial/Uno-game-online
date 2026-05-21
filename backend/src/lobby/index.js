@@ -11,105 +11,169 @@ const {
     toPublicRoom
 } = require('./roomManager');
 
+// Lobby REST API:
+// GET    /lobby/rooms - List all waiting rooms
+// POST   /lobby/rooms - Create a new room
+// POST   /lobby/rooms/quick-join - Quick join a waiting room or create if none available
+// GET    /lobby/rooms/:roomId - Get details of a specific room
+// POST   /lobby/rooms/:roomId/join - Join a specific room
+// DELETE /lobby/rooms/:roomId/players/:playerId - Leave a room
 
-// POST /create-room
-//Body: { playerId }
 
-router.post('/create-room', (req, res) => {
-    const { playerId } = req.body;
-
-    if (!playerId) {
-        return res.status(400).json({ error: 'Player ID is required' });
-    }
-
-    const player = getPlayer(playerId);
-    if (!player) {
-        return res.status(404).json({ error: 'Player not found' });
-    }
-
-    const room = createRoom(player);
-    res.status(201).json(toPublicRoom(room));
-});
-
-// POST /join-room
-// Body: { playerId, roomId }
-
-router.post('/join-room', (req, res) => {
-    const { roomId, playerId } = req.body;
-    if (!playerId || !roomId) {
-        return res.status(400).json({ error: 'Player ID and Room ID are required' });
-    }
-    const player = getPlayer(playerId);
-    if (!player) {
-        return res.status(404).json({ error: 'Player not found' });
-    }
-    const result = joinRoom(roomId, player);
-    if (!result.ok) {
-        return res.status(400).json({ error: result.error });
-    }
-    res.status(200).json(toPublicRoom(result.room));
-});
-
-// POST /quick-join
-// Tries to join a waiting room, if none available, creates a new one
-router.post('/quick', (req, res) => {
-    const { playerId } = req.body;
-    if (!playerId) {
-        return res.status(400).json({ error: 'Player ID is required' });
-    }
-
-    const player = getPlayer(playerId);
-    if (!player) {
-        return res.status(404).json({ error: 'Player not found' });
-    }
-
-    const result = quickJoin(player);
-    if (!result.ok) {
-        return res.status(400).json({ error: result.error });
-    }
-
-    res.status(200).json(toPublicRoom(result.room));
-});
-// GET /lobby/rooms
-// Returns a list of all rooms are waiting
-
+// list rooms
 router.get('/rooms', (req, res) => {
     const rooms = allRooms()
         .filter(room => room.status === 'waiting')
         .map(toPublicRoom);
 
-    res.status(200).json(rooms);
+    res.status(200).json({
+        ok: true,
+        rooms
+    });
 });
 
-// GET /lobby/rooms/:id
-// Returns details of a specific room by ID
-router.get('/rooms/:id', (req, res) => {
-    const room = getRoom(req.params.id);
-    if (!room) {
-        return res.status(404).json({ error: 'Room not found' });
+// create room
+router.post('/rooms', (req, res) => {
+    const { playerId, name, maxPlayers } = req.body;
+
+    if (!playerId) {
+        return res.status(400).json({ 
+            ok: false, 
+            error: 'Player ID is required' 
+        });
     }
-    res.status(200).json(toPublicRoom(room));
+
+    const player = getPlayer(playerId);
+    if (!player) {
+        return res.status(404).json({ 
+            ok: false, 
+            error: 'Player not found' 
+        });
+    }
+
+    const result = createRoom(player, { name, maxPlayers });
+    if (!result.ok) {
+        return res.status(400).json({ 
+            ok: false, 
+            error: result.error,
+            room: result.room ? toPublicRoom(result.room) : null
+        });
+    }
+
+    res.status(201).json({ 
+        ok: true, 
+        room: toPublicRoom(result.room) 
+    });
 });
 
-// POST /lobby/leave
-// Allows a player to leave a room
+// quick join
+router.post('/rooms/quick-join', (req, res) => {
+    const { playerId } = req.body;
+    if (!playerId) {
+        return res.status(400).json({ 
+            ok: false, 
+            error: 'Player ID is required' 
+        });
+    }
+
+    const player = getPlayer(playerId);
+    if (!player) {
+        return res.status(404).json({ 
+            ok: false, 
+            error: 'Player not found' 
+        });
+    }
+
+    const result = quickJoin(player);
+    if (!result.ok) {
+        return res.status(400).json({ 
+            ok: false, 
+            error: result.error 
+        });
+    }
+
+    res.status(200).json({ 
+        ok: true, 
+        room: toPublicRoom(result.room) 
+    });
+});
+
+// get room details
+router.get('/rooms/:roomId', (req, res) => {
+    const room = getRoom(req.params.roomId);
+    if (!room) {
+        return res.status(404).json({ 
+            ok: false, 
+            error: 'Room not found' 
+        });
+    }
+    res.status(200).json({
+        ok: true,
+        room: toPublicRoom(room)
+    });
+});
+
+// join room
+router.post('/rooms/:roomId/join', (req, res) => {
+    const { roomId } = req.params;
+    const { playerId } = req.body;
+    if (!playerId || !roomId) {
+        return res.status(400).json({ 
+            ok: false, 
+            error: 'Player ID and Room ID are required' 
+        });
+    }
+    const player = getPlayer(playerId);
+    if (!player) {
+        return res.status(404).json({ 
+            ok: false, 
+            error: 'Player not found' 
+        });
+    }
+    const result = joinRoom(roomId, player);
+    if (!result.ok) {
+        return res.status(400).json({ 
+            ok: false, 
+            error: result.error 
+        });
+    }
+    res.status(200).json({ 
+        ok: true, 
+        room: toPublicRoom(result.room) 
+    });
+});
+
+// leave room
 router.delete('/rooms/:roomId/players/:playerId', (req, res) => {
     const { roomId, playerId } = req.params;
 
     const room = getRoom(roomId);
     if (!room) {
-        return res.status(404).json({ error: 'Room not found' });
+        return res.status(404).json({ 
+            ok: false, 
+            error: 'Room not found' 
+        });
     }
     const hasPlayer = room.players.some(p => p.id === playerId);
     if (!hasPlayer) {
-        return res.status(404).json({ error: 'Player not in room' });
+        return res.status(404).json({ 
+            ok: false, 
+            error: 'Player not in room' 
+        });
     }
 
     const updatedRoom = removePlayer(roomId, playerId);
     if (!updatedRoom) {
-        return res.status(200).json({ removed: true, room: null });
+        return res.status(200).json({ 
+            ok: true, 
+            removed: true, 
+            room: null 
+        });
     }
-    res.status(200).json(toPublicRoom(updatedRoom));
+    res.status(200).json({ 
+        ok: true, 
+        room: toPublicRoom(updatedRoom) 
+    });
 });
 
 module.exports = router;
