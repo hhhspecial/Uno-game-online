@@ -24,4 +24,10 @@ function unbind(socketId) {
     delete map[socketId]
 }
 
-module.exports = { bind, unbind, getPlayerId, getRoomId, getSocketId }
+module.exports = {
+    bind,
+    unbind,
+    getPlayerId,
+    getRoomId,
+    getSocketId
+}

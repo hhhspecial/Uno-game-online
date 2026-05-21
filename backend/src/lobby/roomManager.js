@@ -100,6 +100,12 @@ function allRooms() {
     return Object.values(rooms);
 }
 
+function getPublicWaitingRooms() {
+    return allRooms()
+        .filter(room => room.status === 'waiting')
+        .map(toPublicRoom);
+}
+
 module.exports = {
     rooms,
     MAX_PLAYERS,
@@ -111,5 +117,6 @@ module.exports = {
     removePlayer,
     allRooms,
     toPublicRoom,
-    toPublicPlayer
+    toPublicPlayer,
+    getPublicWaitingRooms
 };

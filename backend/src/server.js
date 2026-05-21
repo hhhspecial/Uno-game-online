@@ -5,6 +5,9 @@ const { Server } = require('socket.io');
 const { setupSocket } = require('./socket/socketHandle')
 const { createGame } = require('./game/gameState')
 
+const { users } = require('./auth/guestHandle');
+const { rooms } = require('./lobby/roomManager');
+
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -39,7 +42,22 @@ app.get('/test-game', (req, res) => {
         { id: 'player4', name: 'Đức Huy' },
     ];
 
-    const game = createGame(players, roomId);
+    const game = createGame(roomId, players);
+
+    // Lưu players vào users store để auth không bị null
+players.forEach(p => {
+    users[p.id] = { ...p, isGuest: true };
+});
+
+// Lưu room vào rooms store để authenticateSocket tìm được
+rooms[roomId] = {
+    id: roomId,
+    players,
+    maxPlayers: 4,
+    status: 'playing',
+    createdAt: Date.now()
+};
+
     console.log('Test game created:', roomId, 'Players:', players.map(p => p.id));
 
     const baseUrl = `${req.protocol}://${req.get('host')}`;
