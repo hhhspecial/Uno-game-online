@@ -3,58 +3,114 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>UNO — Đăng nhập & Đăng ký</title>
+    <title>UNO — Đăng nhập</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="../css/login.css" />
   </head>
   <body>
-    <div class="login-container">
-      <div class="login-header">
-        <h1>🎴 UNO</h1>
-        <p>Trò chơi bài trực tuyến</p>
-      </div>
+    <div class="bg-cards">
+      <div class="bg-card"></div>
+      <div class="bg-card"></div>
+      <div class="bg-card"></div>
+      <div class="bg-card"></div>
+      <div class="bg-card"></div>
+      <div class="bg-card"></div>
+      <div class="bg-card"></div>
+      <div class="bg-card"></div>
+    </div>
 
-      <div class="tab-navigation">
-        <button class="tab-btn active" data-target="login">Đăng nhập</button>
-        <button class="tab-btn" data-target="register">Đăng ký</button>
-      </div>
+    <div class="login-wrapper">
+      <div class="login-box">
+        <div class="logo">
+          <div class="logo-badge"><span>UNO</span></div>
+          <h1>UNO Online</h1>
+          <p>Trò chơi bài trực tuyến nhiều người</p>
+        </div>
 
-      <div class="login-content">
-        <form id="login-form" class="login-form tab-content active">
+        <div class="tab-nav">
+          <button class="tab-btn active" data-target="login">Đăng nhập</button>
+          <button class="tab-btn" data-target="register">Đăng ký</button>
+        </div>
+
+        <form id="login-form" class="tab-content active" novalidate>
           <div class="form-group">
             <label for="login-username">Tên đăng nhập</label>
-            <input type="text" id="login-username" placeholder="Nhập tên đăng nhập" required minlength="3" maxlength="20" />
+            <input
+              type="text"
+              id="login-username"
+              placeholder="Nhập tên đăng nhập"
+              required
+              minlength="3"
+              maxlength="20"
+              autocomplete="username"
+            />
           </div>
           <div class="form-group">
             <label for="login-password">Mật khẩu</label>
-            <input type="password" id="login-password" placeholder="Nhập mật khẩu" required minlength="3" />
+            <input
+              type="password"
+              id="login-password"
+              placeholder="Nhập mật khẩu"
+              required
+              minlength="3"
+              autocomplete="current-password"
+            />
           </div>
-          <div class="message error-message" id="login-error"></div>
-          <button type="submit" class="btn-primary btn-full" id="btn-login">
-            <span class="btn-text">Đăng nhập</span>
+          <div class="error-msg" id="login-error"></div>
+          <button type="submit" class="btn-primary" id="btn-login">
+            Đăng nhập
           </button>
         </form>
 
-        <form id="register-form" class="login-form tab-content">
+        <form id="register-form" class="tab-content" novalidate>
           <div class="form-group">
-            <label for="reg-username">Tên đăng nhập mới</label>
-            <input type="text" id="reg-username" placeholder="Nhập tên đăng nhập" required minlength="3" maxlength="20" />
+            <label for="reg-username">Tên đăng nhập</label>
+            <input
+              type="text"
+              id="reg-username"
+              placeholder="Nhập tên đăng nhập"
+              required
+              minlength="3"
+              maxlength="20"
+              autocomplete="username"
+            />
           </div>
           <div class="form-group">
             <label for="reg-password">Mật khẩu</label>
-            <input type="password" id="reg-password" placeholder="Nhập mật khẩu" required minlength="3" />
+            <input
+              type="password"
+              id="reg-password"
+              placeholder="Nhập mật khẩu"
+              required
+              minlength="3"
+              autocomplete="new-password"
+            />
           </div>
-          <div class="message error-message" id="register-error"></div>
-          <button type="submit" class="btn-primary btn-full" id="btn-register">
-            <span class="btn-text">Đăng ký</span>
+          <div class="error-msg" id="register-error"></div>
+          <button type="submit" class="btn-primary" id="btn-register">
+            Tạo tài khoản
           </button>
         </form>
 
-        <div class="divider"><span>Hoặc</span></div>
+        <div class="divider"><span>hoặc</span></div>
 
-        <button type="button" class="btn-secondary btn-guest btn-full" id="btn-guest">
+        <button type="button" class="btn-guest" id="btn-guest">
           <span class="btn-text">👤 Chơi tạm thời (Khách)</span>
-          <span class="btn-loading" style="display: none"><span class="spinner-small"></span> Đang vào game...</span>
+          <span class="btn-loading"
+            ><span class="spinner"></span> Đang vào...</span
+          >
         </button>
+
+        <div class="color-dots">
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+        </div>
       </div>
     </div>
 

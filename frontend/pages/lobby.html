@@ -1,54 +1,102 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>UNO — Phòng chờ</title>
-  <link rel="stylesheet" href="../css/lobby.css" />
-</head>
-<body>
-  <div class="lobby-container">
-    <div class="lobby-header">
-      <h1>🎴 UNO - Phòng chờ</h1>
-      <div class="player-info">
-        <div class="player-details">
-          <div class="player-name" id="current-player">Người chơi</div>
-          <div class="player-status" id="login-type">Chế độ khách</div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>UNO — Phòng chờ trực tuyến</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../css/lobby.css" />
+  </head>
+  <body>
+
+    <div id="lobby-container" class="lobby-container">
+      <div class="lobby-header">
+        <h1>🎴 UNO - Sảnh Trực Tuyến</h1>
+        <div class="player-info">
+          <div class="player-details">
+            <div class="player-name" id="current-player">Đang tải...</div>
+            <div class="player-status" id="login-type">Chế độ khách</div>
+          </div>
+          <button class="btn-logout" id="btn-logout">Đăng xuất</button>
         </div>
-        <button class="btn-logout" id="btn-logout">Đăng xuất</button>
       </div>
-    </div>
 
-    <div class="lobby-content">
-      <div class="panel">
-        <h2>📝 Thiết lập phòng mới</h2>
-        <form class="create-room-form" id="create-room-form">
-          <div class="form-group">
-            <label for="room-name">Tên phòng chơi</label>
-            <input type="text" id="room-name" placeholder="Ví dụ: Phòng của tôi" required minlength="3" maxlength="30" />
-          </div>
-          <div class="form-group">
-            <label for="max-players">Số lượng người chơi</label>
-            <select id="max-players">
-              <option value="2">2 người</option>
-              <option value="3">3 người</option>
-              <option value="4" selected>4 người</option>
-            </select>
-          </div>
-          <button type="submit" class="btn-primary btn-large btn-full" id="btn-create-room">
-             Tạo phòng & Vào bàn chơi
+      <div class="lobby-content">
+        <div class="panel quick-join-panel">
+          <button type="button" class="btn-primary btn-large btn-full" id="btn-quick-join">
+            <span class="btn-text">⚡ Vào phòng nhanh</span>
+            <span class="btn-loading" style="display: none">
+              <span class="spinner-small"></span> Đang tìm kiếm bàn trống...
+            </span>
           </button>
-        </form>
-      </div>
+        </div>
 
-      <div class="panel">
-        <h2>🎮 Phòng đang mở</h2>
-        <div class="rooms-list" id="rooms-container">
+        <div class="panel">
+          <h2>📝 Thiết lập bàn chơi mới</h2>
+          <form class="create-room-form" id="create-room-form">
+            <div class="form-group">
+              <label for="room-name">Tên phòng chơi</label>
+              <input type="text" id="room-name" placeholder="Ví dụ: Phòng Thách Đấu UNO" required minlength="3" maxlength="30" />
+            </div>
+            <div class="form-group">
+              <label for="max-players">Số lượng vị trí chơi</label>
+              <select id="max-players">
+                <option value="2">2 người</option>
+                <option value="3">3 người</option>
+                <option value="4" selected>4 người</option>
+              </select>
+            </div>
+            <button type="submit" class="btn-primary btn-large btn-full" id="btn-create-room">
+              Tạo phòng & Vào bàn chơi
+            </button>
+          </form>
+        </div>
+
+        <div class="panel">
+          <h2>🎮 Các phòng đang trực tuyến</h2>
+          <div class="rooms-list" id="rooms-container">
+            <p style="text-align:center;color:#8892a4;grid-column: 1/-1;">Đang cập nhật danh sách phòng...</p>
           </div>
+        </div>
       </div>
     </div>
-  </div>
 
-  <script src="../js/lobby.js" defer></script>
-</body>
+    <div id="waiting-room-container" class="waiting-room-container" style="display: none">
+      <div class="waiting-room-header">
+        <button class="btn-back" id="btn-back-lobby">← Thoát ra Sảnh</button>
+        <h1>🎴 UNO - Phòng Chờ Bàn Đấu</h1>
+        <div class="room-title" id="room-title">Tên phòng: —</div>
+      </div>
+
+      <div class="waiting-room-content">
+        <div class="players-section">
+          <h2>👥 Thành viên trong phòng (<span id="current-count">0</span>/<span id="room-max-players">4</span>)</h2>
+          <div class="players-grid" id="players-grid">
+            </div>
+        </div>
+
+        <div class="room-actions">
+          <div id="host-actions" style="display: none; margin-bottom: 12px;">
+            <button type="button" class="btn-primary btn-large btn-full" id="btn-start-game" style="background-color: var(--green); box-shadow: 0 4px 16px rgba(0,165,80,0.35);">
+              ▶ KHỞI ĐẦU TRÒ CHƠI
+            </button>
+          </div>
+          <div id="player-actions">
+            <button type="button" class="btn-secondary btn-large btn-full" id="btn-leave-room">
+              Rời khỏi bàn chơi
+            </button>
+          </div>
+        </div>
+
+        <div class="room-settings">
+          <p>Mã số Phòng (Room ID): <strong id="room-id-display" style="color: var(--yellow);">—</strong></p>
+          <p>Trạng thái kết nối: <span id="room-status" style="color: var(--green);">Đang đợi các tay bài...</span></p>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script src="../js/lobby.js" defer></script>
+  </body>
 </html>
