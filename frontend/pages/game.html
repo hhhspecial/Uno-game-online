@@ -8,6 +8,18 @@
   <link rel="stylesheet" href="../css/game.css" />
 </head>
 <body>
+  <!-- Portrait orientation overlay -->
+  <div id="rotate-overlay" aria-live="assertive">
+    <div class="rotate-icon">
+      <span class="rotate-arrow">↻</span>
+    </div>
+    <h2>
+      Xoay ngang thiết bị
+      <span>để trải nghiệm game tốt nhất</span>
+    </h2>
+    <p class="rotate-hint">Trò chơi UNO được tối ưu cho chế độ xoay ngang. Hãy xoay điện thoại hoặc tablet của bạn.</p>
+  </div>
+
   <div id="game-shell">
     <header id="demo-hud" aria-label="Thanh trạng thái mẫu">
       <span id="mode-badge" class="badge">UI mẫu (mock)</span>
@@ -110,5 +122,47 @@
 
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" crossorigin="anonymous"></script>
   <script src="../js/game.js" defer></script>
+  <script>
+    // Attempt to lock screen orientation to landscape
+    (function() {
+      function tryLockLandscape() {
+        if (screen.orientation && screen.orientation.lock) {
+          screen.orientation.lock('landscape').catch(function() {
+            // Orientation lock not supported or not in fullscreen — silent fail
+          });
+        }
+      }
+
+      // Try lock on load
+      tryLockLandscape();
+
+      // Re-render game on orientation change to adapt layout
+      function onOrientationChange() {
+        // Small delay to let the browser finish rotating
+        setTimeout(function() {
+          window.dispatchEvent(new Event('resize'));
+        }, 300);
+      }
+
+      if (screen.orientation) {
+        screen.orientation.addEventListener('change', onOrientationChange);
+      }
+      window.addEventListener('orientationchange', onOrientationChange);
+
+      // Auto-enter fullscreen on first touch (enables orientation lock on some devices)
+      var fullscreenTriggered = false;
+      document.addEventListener('touchstart', function() {
+        if (fullscreenTriggered) return;
+        fullscreenTriggered = true;
+        var docEl = document.documentElement;
+        if (docEl.requestFullscreen) {
+          docEl.requestFullscreen().then(tryLockLandscape).catch(function() {});
+        } else if (docEl.webkitRequestFullscreen) {
+          docEl.webkitRequestFullscreen();
+          tryLockLandscape();
+        }
+      }, { once: true });
+    })();
+  </script>
 </body>
 </html>
