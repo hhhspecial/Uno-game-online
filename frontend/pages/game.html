@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
@@ -8,18 +8,6 @@
   <link rel="stylesheet" href="../css/game.css" />
 </head>
 <body>
-  <!-- Portrait orientation overlay -->
-  <div id="rotate-overlay" aria-live="assertive">
-    <div class="rotate-icon">
-      <span class="rotate-arrow">↻</span>
-    </div>
-    <h2>
-      Xoay ngang thiết bị
-      <span>để trải nghiệm game tốt nhất</span>
-    </h2>
-    <p class="rotate-hint">Trò chơi UNO được tối ưu cho chế độ xoay ngang. Hãy xoay điện thoại hoặc tablet của bạn.</p>
-  </div>
-
   <div id="game-shell">
     <header id="demo-hud" aria-label="Thanh trạng thái mẫu">
       <span id="mode-badge" class="badge">UI mẫu (mock)</span>
@@ -29,140 +17,146 @@
       <span id="socket-status"></span>
     </header>
 
-    <div id="uno-battlefield">
-      <!-- TOP OPPONENT -->
-      <div id="opponent-top" class="player-zone opponent top" data-seat="1">
-        <div class="player-info" data-seat="1">
-          <div class="avatar-wrap">
-            <div class="avatar-circle">P2</div>
-            <div class="avatar-glow"></div>
-          </div>
-          <span class="player-name">Player 2</span>
-        </div>
-        <div class="opponent-cards" data-seat="1"></div>
-        <span class="card-count-badge" data-seat="1"></span>
-      </div>
-
-      <!-- MIDDLE ROW: LEFT - CENTER - RIGHT -->
-      <div id="middle-row">
-        <!-- LEFT OPPONENT -->
-        <div id="opponent-left" class="player-zone opponent left" data-seat="3">
-          <div class="player-info" data-seat="3">
+      <div id="uno-battlefield">
+        <!-- TOP OPPONENT -->
+        <div id="opponent-top" class="player-zone opponent top" data-seat="1">
+          <div class="player-info" data-seat="1">
             <div class="avatar-wrap">
-              <div class="avatar-circle">P4</div>
+              <div class="avatar-circle">P2</div>
               <div class="avatar-glow"></div>
             </div>
-            <span class="player-name">Player 4</span>
+            <span class="player-name">Player 2</span>
           </div>
-          <div class="opponent-cards" data-seat="3"></div>
-          <span class="card-count-badge" data-seat="3"></span>
+          <div class="opponent-cards" data-seat="1"></div>
+          <span class="card-count-badge" data-seat="1"></span>
         </div>
 
-        <!-- CENTER TABLE -->
-        <div id="center-table">
-          <div id="current-color-glow" class="glow-red"></div>
-          <div class="direction-indicator">
-            <span class="dir-icon">↻</span>
-            <span class="dir-text">Thuận chiều</span>
-          </div>
-          <div class="piles-row">
-            <div id="draw-pile" class="draw-pile-wrap" role="button" tabindex="0" aria-label="Bốc bài">
-              <div class="draw-pile-stack" id="draw-pile-stack" aria-hidden="true"></div>
+        <!-- MIDDLE ROW: LEFT - CENTER - RIGHT -->
+        <div id="middle-row">
+          <!-- LEFT OPPONENT -->
+          <div
+            id="opponent-left"
+            class="player-zone opponent left"
+            data-seat="3"
+          >
+            <div class="player-info" data-seat="3">
+              <div class="avatar-wrap">
+                <div class="avatar-circle">P4</div>
+                <div class="avatar-glow"></div>
+              </div>
+              <span class="player-name">Player 4</span>
             </div>
-            <div id="discard-pile" aria-label="Chồng bỏ bài"></div>
+            <div class="opponent-cards" data-seat="3"></div>
+            <span class="card-count-badge" data-seat="3"></span>
           </div>
-        </div>
 
-        <!-- RIGHT OPPONENT -->
-        <div id="opponent-right" class="player-zone opponent right" data-seat="2">
-          <div class="player-info" data-seat="2">
-            <div class="avatar-wrap">
-              <div class="avatar-circle">P3</div>
-              <div class="avatar-glow"></div>
+          <!-- CENTER TABLE -->
+          <div id="center-table">
+            <div id="current-color-glow" class="glow-red"></div>
+            <div class="direction-indicator">
+              <span class="dir-icon">↻</span>
+              <span class="dir-text">Thuận chiều</span>
             </div>
-            <span class="player-name">Player 3</span>
-          </div>
-          <div class="opponent-cards" data-seat="2"></div>
-          <span class="card-count-badge" data-seat="2"></span>
-        </div>
-      </div>
-
-      <!-- MY ZONE (BOTTOM) -->
-      <div id="my-zone" class="player-zone bottom" data-seat="0">
-        <div id="my-hand" class="hand-container"></div>
-        <div class="my-footer">
-          <div class="player-info" data-seat="0">
-            <div class="avatar-wrap">
-              <div class="avatar-circle">Me</div>
-              <div class="avatar-glow"></div>
+            <div class="piles-row">
+              <div
+                id="draw-pile"
+                class="draw-pile-wrap"
+                role="button"
+                tabindex="0"
+                aria-label="Bốc bài"
+              >
+                <div
+                  class="draw-pile-stack"
+                  id="draw-pile-stack"
+                  aria-hidden="true"
+                ></div>
+              </div>
+              <div id="discard-pile" aria-label="Chồng bỏ bài"></div>
             </div>
-            <span class="player-name">Bạn</span>
           </div>
-          <button type="button" id="btn-call-uno">UNO!</button>
+
+          <!-- RIGHT OPPONENT -->
+          <div
+            id="opponent-right"
+            class="player-zone opponent right"
+            data-seat="2"
+          >
+            <div class="player-info" data-seat="2">
+              <div class="avatar-wrap">
+                <div class="avatar-circle">P3</div>
+                <div class="avatar-glow"></div>
+              </div>
+              <span class="player-name">Player 3</span>
+            </div>
+            <div class="opponent-cards" data-seat="2"></div>
+            <span class="card-count-badge" data-seat="2"></span>
+          </div>
         </div>
-      </div>
 
-      <!-- COLOR PICKER MODAL -->
-      <div id="color-picker-modal" class="hidden" role="dialog" aria-modal="true" aria-label="Chọn màu">
-        <div class="color-wheel">
-          <div class="color-slice red" data-color="red" role="button" tabindex="0" aria-label="Đỏ"></div>
-          <div class="color-slice blue" data-color="blue" role="button" tabindex="0" aria-label="Xanh dương"></div>
-          <div class="color-slice green" data-color="green" role="button" tabindex="0" aria-label="Xanh lá"></div>
-          <div class="color-slice yellow" data-color="yellow" role="button" tabindex="0" aria-label="Vàng"></div>
+        <!-- MY ZONE (BOTTOM) -->
+        <div id="my-zone" class="player-zone bottom" data-seat="0">
+          <div id="my-hand" class="hand-container"></div>
+          <div class="my-footer">
+            <div class="player-info" data-seat="0">
+              <div class="avatar-wrap">
+                <div class="avatar-circle">Me</div>
+                <div class="avatar-glow"></div>
+              </div>
+              <span class="player-name">Bạn</span>
+            </div>
+            <button type="button" id="btn-call-uno">UNO!</button>
+          </div>
         </div>
+
+        <!-- COLOR PICKER MODAL -->
+        <div
+          id="color-picker-modal"
+          class="hidden"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Chọn màu"
+        >
+          <div class="color-wheel">
+            <div
+              class="color-slice red"
+              data-color="red"
+              role="button"
+              tabindex="0"
+              aria-label="Đỏ"
+            ></div>
+            <div
+              class="color-slice blue"
+              data-color="blue"
+              role="button"
+              tabindex="0"
+              aria-label="Xanh dương"
+            ></div>
+            <div
+              class="color-slice green"
+              data-color="green"
+              role="button"
+              tabindex="0"
+              aria-label="Xanh lá"
+            ></div>
+            <div
+              class="color-slice yellow"
+              data-color="yellow"
+              role="button"
+              tabindex="0"
+              aria-label="Vàng"
+            ></div>
+          </div>
+        </div>
+
+        <!-- Card flight animation layer -->
+        <div id="card-motion-layer" aria-hidden="true"></div>
+
+        <!-- Action guide -->
+        <div id="action-guide" class="hidden"></div>
       </div>
-
-      <!-- Card flight animation layer -->
-      <div id="card-motion-layer" aria-hidden="true"></div>
-
-      <!-- Action guide -->
-      <div id="action-guide" class="hidden"></div>
     </div>
-  </div>
 
   <script src="https://cdn.socket.io/4.7.5/socket.io.min.js" crossorigin="anonymous"></script>
   <script src="../js/game.js" defer></script>
-  <script>
-    // Attempt to lock screen orientation to landscape
-    (function() {
-      function tryLockLandscape() {
-        if (screen.orientation && screen.orientation.lock) {
-          screen.orientation.lock('landscape').catch(function() {
-            // Orientation lock not supported or not in fullscreen — silent fail
-          });
-        }
-      }
-
-      // Try lock on load
-      tryLockLandscape();
-
-      // Re-render game on orientation change to adapt layout
-      function onOrientationChange() {
-        // Small delay to let the browser finish rotating
-        setTimeout(function() {
-          window.dispatchEvent(new Event('resize'));
-        }, 300);
-      }
-
-      if (screen.orientation) {
-        screen.orientation.addEventListener('change', onOrientationChange);
-      }
-      window.addEventListener('orientationchange', onOrientationChange);
-
-      // Auto-enter fullscreen on first touch (enables orientation lock on some devices)
-      var fullscreenTriggered = false;
-      document.addEventListener('touchstart', function() {
-        if (fullscreenTriggered) return;
-        fullscreenTriggered = true;
-        var docEl = document.documentElement;
-        if (docEl.requestFullscreen) {
-          docEl.requestFullscreen().then(tryLockLandscape).catch(function() {});
-        } else if (docEl.webkitRequestFullscreen) {
-          docEl.webkitRequestFullscreen();
-          tryLockLandscape();
-        }
-      }, { once: true });
-    })();
-  </script>
 </body>
 </html>

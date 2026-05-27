@@ -21,6 +21,12 @@ app.use(express.json());
 
 // Serve frontend files
 app.use('/frontend', express.static(path.join(__dirname, '../../frontend')));
+app.use(express.static(path.join(__dirname, '../../frontend')));
+
+// Mặc định trả về login page
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '../../frontend/pages/login.html'));
+});
 
 const authRouter = require('./auth');
 app.use('/auth', authRouter);

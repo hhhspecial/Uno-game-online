@@ -6,7 +6,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const playerId = sessionStorage.getItem("playerId");
 
     if (!playerId) {
-        window.location.href = "login.html";
+        window.location.href = "/pages/login.html";
         return;
     }
 
@@ -46,7 +46,7 @@ function initializeLobby(playerId) {
     document.getElementById("btn-logout").addEventListener("click", () => {
         sessionStorage.clear();
         if (socket) socket.disconnect();
-        window.location.href = "login.html";
+        window.location.href = "/pages/login.html";
     });
 
     // Kết nối Socket
@@ -195,9 +195,7 @@ function resetQuickJoinButton() {
     btn.querySelector(".btn-loading").style.display = "none";
 }
 
-// ============================================================
-// KẾT NỐI SOCKET VÀ XỬ LÝ LẮNG NGHE SỰ KIỆN TỪ BACKEND
-// ============================================================
+//KẾT NỐI SOCKET
 function connectSocket(playerId) {
     if (socket && socket.connected) return;
 
@@ -232,7 +230,7 @@ function connectSocket(playerId) {
 
     // Host bấm bắt đầu -> server gửi event -> Chuyển sang game.html
     socket.on("game_start", (data) => {
-        window.location.href = "game.html";
+        window.location.href = "/pages/game.html";
     });
 
     // Xử lý khi phòng bị hủy do Host/người cuối cùng rời đi
