@@ -103,5 +103,5 @@ function saveSessionAndEnterLobby(id, name, isGuest) {
     sessionStorage.setItem("playerId", id);
     sessionStorage.setItem("playerName", name);
     sessionStorage.setItem("isGuest", isGuest ? "true" : "false");
-    window.location.href = "lobby.html";
+    window.location.href = "/pages/lobby.html";
 }
