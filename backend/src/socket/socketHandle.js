@@ -558,7 +558,8 @@ function sanitize(game, currentPlayerId) {
         direction: game.direction,
         currentCard: game.currentCard,
         drawStack: game.drawStack,
-        status: game.status
+        status: game.status,
+        winnerId: game.winnerId || null
     }
 
     for (const [pid, cards] of Object.entries(game.hand)) {
