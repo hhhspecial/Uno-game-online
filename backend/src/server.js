@@ -1,7 +1,9 @@
 const express = require('express');
 const http = require('http');
 const path = require('path');
+require('dotenv').config();
 const { Server } = require('socket.io');
+const { connectDB } = require('./configs/db');
 const { setupSocket } = require('./socket/socketHandle')
 const { createGame } = require('./game/gameState')
 
@@ -106,10 +108,16 @@ app.get('/test-game', (req, res) => {
     res.send(html);
 });
 
-setupSocket(io)
+async function startServer() {
+    await connectDB();
 
-const PORT = process.env.PORT || 3000;
+    setupSocket(io);
 
-server.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
-});
+    const PORT = process.env.PORT || 3000;
+
+    server.listen(PORT, () => {
+        console.log(`Server is running on port ${PORT}`);
+    });
+}
+
+startServer();

@@ -33,7 +33,7 @@ router.get('/rooms', (req, res) => {
 });
 
 // create room
-router.post('/rooms', (req, res) => {
+router.post('/rooms', async (req, res) => {
     const { playerId, name, maxPlayers } = req.body;
 
     if (!playerId) {
@@ -43,7 +43,7 @@ router.post('/rooms', (req, res) => {
         });
     }
 
-    const player = getPlayer(playerId);
+    const player = await getPlayer(playerId);
     if (!player) {
         return res.status(404).json({ 
             ok: false, 
@@ -67,7 +67,7 @@ router.post('/rooms', (req, res) => {
 });
 
 // quick join
-router.post('/rooms/quick-join', (req, res) => {
+router.post('/rooms/quick-join', async (req, res) => {
     const { playerId } = req.body;
     if (!playerId) {
         return res.status(400).json({ 
@@ -76,7 +76,7 @@ router.post('/rooms/quick-join', (req, res) => {
         });
     }
 
-    const player = getPlayer(playerId);
+    const player = await getPlayer(playerId);
     if (!player) {
         return res.status(404).json({ 
             ok: false, 
@@ -114,7 +114,7 @@ router.get('/rooms/:roomId', (req, res) => {
 });
 
 // join room
-router.post('/rooms/:roomId/join', (req, res) => {
+router.post('/rooms/:roomId/join', async (req, res) => {
     const { roomId } = req.params;
     const { playerId } = req.body;
     if (!playerId || !roomId) {
@@ -123,7 +123,7 @@ router.post('/rooms/:roomId/join', (req, res) => {
             error: 'Player ID and Room ID are required' 
         });
     }
-    const player = getPlayer(playerId);
+    const player = await getPlayer(playerId);
     if (!player) {
         return res.status(404).json({ 
             ok: false, 

@@ -138,8 +138,8 @@ function startGameIfReady(io, room) {
     return game;
 }
 
-function authenticateSocket(socket, playerId, roomId) { // validate player and room existence and bind socket to player
-    const player = getPlayer(playerId);
+async function authenticateSocket(socket, playerId, roomId) { // validate player and room existence and bind socket to player
+    const player = await getPlayer(playerId);
     if (!player) {
         return { ok: false, error: 'Player not found' };
     }
@@ -178,7 +178,7 @@ function setupSocket(io) {
 
         
         // Client can emit 'auth' to validate their playerId and roomId and bind their socket to their player
-        socket.on('auth', ({ playerId, roomId } = {}, callback) => {
+        socket.on('auth', async({ playerId, roomId } = {}, callback) => {
             const playerCheck = requirePlayerId(playerId);
             if (!playerCheck.ok) {
                 return callback?.(playerCheck);
@@ -189,7 +189,7 @@ function setupSocket(io) {
                 return callback?.(roomCheck);
             }
 
-            const result = authenticateSocket(socket, playerId, roomId)
+            const result = await authenticateSocket(socket, playerId, roomId)
 
             if (!result.ok) {
                 return callback?.(result);
@@ -214,13 +214,13 @@ function setupSocket(io) {
         });
 
         // If client gets disconnected, they can emit 'auth:restore' with the same playerId to restore their session if they reconnect within RECONNECT_TIMEOUT
-        socket.on('auth:restore', ({ playerId } = {}, callback) => {
+        socket.on('auth:restore', async ({ playerId } = {}, callback) => {
             const playerCheck = requirePlayerId(playerId);
             if (!playerCheck.ok) {
                 return callback?.(playerCheck);
             }
 
-            const player = getPlayer(playerId);
+            const player = await getPlayer(playerId);
 
             if (!player) {
                 return callback?.({
@@ -279,13 +279,13 @@ function setupSocket(io) {
         });
 
         // Create, join, quick join, leave lobby events. On success, bind socket to player and room, and emit room update and lobby rooms update to all clients
-        socket.on('lobby:create', ({ playerId, name, maxPlayers } = {}, callback) => {
+        socket.on('lobby:create', async ({ playerId, name, maxPlayers } = {}, callback) => {
             const playerCheck = requirePlayerId(playerId);
             if (!playerCheck.ok) {
                 return callback?.(playerCheck);
             }
 
-            const player = getPlayer(playerId);
+            const player = await getPlayer(playerId);
             if (!player) {
                 return callback?.({ 
                     ok: false, 
@@ -316,13 +316,13 @@ function setupSocket(io) {
             emitLobbyRooms(io);
         });
 
-        socket.on('lobby:quick', ({ playerId } = {}, callback) => {
+        socket.on('lobby:quick', async ({ playerId } = {}, callback) => {
             const playerCheck = requirePlayerId(playerId);
             if (!playerCheck.ok) {
                 return callback?.(playerCheck);
             }
 
-            const player = getPlayer(playerId);
+            const player = await getPlayer(playerId);
             if (!player) {
                 return callback?.({ 
                     ok: false, 
@@ -354,7 +354,7 @@ function setupSocket(io) {
             startGameIfReady(io, room);
         });
 
-        socket.on('lobby:join', ({ playerId, roomId } = {}, callback) => {
+        socket.on('lobby:join', async ({ playerId, roomId } = {}, callback) => {
             const playerCheck = requirePlayerId(playerId);
             if (!playerCheck.ok) {
                 return callback?.(playerCheck);
@@ -365,7 +365,7 @@ function setupSocket(io) {
                 return callback?.(roomCheck);
             }
 
-            const player = getPlayer(playerId);
+            const player = await getPlayer(playerId);
             if (!player) {
                 return callback?.({ 
                     ok: false, 

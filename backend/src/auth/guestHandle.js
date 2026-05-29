@@ -1,12 +1,28 @@
 const { v4: uuidv4 } = require('uuid');
 const bcrypt = require('bcrypt');
+const User = require('./userModel');
 
 const users = {};
+
+function toPublicAuthPlayer(user) {
+    return {
+        id: user.id,
+        name: user.name,
+        isGuest: !!user.isGuest
+    };
+}
 
 const createGuestUser = async () => {
     const id = 'guest_' + uuidv4().slice(0, 8); // Generate a unique guest ID
     const guestUsername = `guest_` + Math.floor(Math.random() * 10000 + 100); // Generate a random guest username
-    const player = { id: id, name: guestUsername, isGuest: true };
+    const guest = await User.create({
+        id,
+        name: guestUsername,
+        password: null,
+        isGuest: true,
+        lastLoginAt: new Date()
+    })
+    const player = toPublicAuthPlayer(guest);
     users[id] = player;
     return player;
 };
@@ -22,46 +38,62 @@ async function register(username, password) {
         throw new Error('Password must be at least 6 characters long');
     }
 
-    const existingUser = Object.values(users).find(
-        u => !u.isGuest && u.name === username
-    );
+    const existingUser = await User.findOne({
+        name: username,
+        isGuest: false
+    }).lean();
+
     if (existingUser) throw new Error('Username already exists');
 
     const id = 'user_' + uuidv4().slice(0, 8);
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = {
+    const newUser = await User.create({
         id,
         name: username,
         password: hashedPassword,
-        isGuest: false
-    };
+        isGuest: false,
+        lastLoginAt: new Date()
+    });
 
-    users[id] = newUser;
+    const player = toPublicAuthPlayer(newUser);
+    users[id] = player;
 
-    return {
-        id: newUser.id,
-        name: newUser.name,
-        isGuest: false
-    };
+    return player;
 }
 
 
 async function login(username, password) {
-    const existingUser = Object.values(users).find(u => !u.isGuest && u.name === username);
+    username = username.trim();
+
+    const existingUser = await User.findOne({
+        name: username,
+        isGuest: false
+    }).lean();
     if (!existingUser) throw new Error('User not found');
 
     const passwordMatch = await bcrypt.compare(password, existingUser.password);
     if (!passwordMatch) throw new Error('Invalid password');
-    return {
-        id: existingUser.id,
-        name: existingUser.name,
-        isGuest: false
-    };
+    await User.updateOne(
+        { id: existingUser.id },
+        { $set: { lastLoginAt: new Date() } }
+    );
+    const player = toPublicAuthPlayer(existingUser);
+    users[existingUser.id] = player;
+    return player;
 
 }
 
-function getPlayer(id) {
-    return users[id] || null;
+async function getPlayer(id) {
+    const cachedPlayer = users[id];
+    if (cachedPlayer) return cachedPlayer;
+
+    const user = await User.findOne({ id }).lean();
+    if (!user) return null;
+
+    const publicPlayer = toPublicAuthPlayer(user);
+    users[id] = publicPlayer;
+    
+    return publicPlayer;
 }
 
 module.exports = {
