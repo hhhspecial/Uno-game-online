@@ -75,7 +75,9 @@ function handleEvent(event) {
     hand.splice(index, 1)
     if (hand.length === 0) {
         game.status = "finished"
+        game.winnerId = playerId
         console.log(playerId + " wins!")
+        updateGame(roomId, game)
         return game
     }
 
