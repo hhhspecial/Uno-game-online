@@ -230,7 +230,16 @@ function connectSocket(playerId) {
 
     // Host bấm bắt đầu -> server gửi event -> Chuyển sang game.html
     socket.on("game_start", (data) => {
-        window.location.href = "/pages/game.html";
+        const playerId = sessionStorage.getItem("playerId");
+        const roomId = (data && data.room && data.room.id) || currentRoomId || sessionStorage.getItem("roomId");
+
+        if (!playerId || !roomId) {
+            alert("Không thể vào game: thiếu thông tin người chơi hoặc phòng.");
+            return;
+        }
+
+        sessionStorage.setItem("roomId", roomId);
+        window.location.href = `/pages/game.html?mock=0&playerId=${encodeURIComponent(playerId)}&roomId=${encodeURIComponent(roomId)}`;
     });
 
     // Xử lý khi phòng bị hủy do Host/người cuối cùng rời đi
