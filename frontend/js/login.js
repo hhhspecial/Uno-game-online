@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
     // Chuyển thẳng vào sảnh nếu đã đăng nhập
-    if (sessionStorage.getItem("playerId")) {
+    if (sessionStorage.getItem("playerId") || localStorage.getItem("playerId")) {
         window.location.href = "lobby.html";
         return;
     }
@@ -100,8 +100,18 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function saveSessionAndEnterLobby(id, name, isGuest) {
-    sessionStorage.setItem("playerId", id);
-    sessionStorage.setItem("playerName", name);
-    sessionStorage.setItem("isGuest", isGuest ? "true" : "false");
+    clearStoredSession();
+
+    const storage = isGuest ? sessionStorage : localStorage;
+    storage.setItem("playerId", id);
+    storage.setItem("playerName", name);
+    storage.setItem("isGuest", isGuest ? "true" : "false");
     window.location.href = "/pages/lobby.html";
+}
+
+function clearStoredSession() {
+    ["playerId", "playerName", "isGuest", "roomId"].forEach((key) => {
+        sessionStorage.removeItem(key);
+        localStorage.removeItem(key);
+    });
 }
