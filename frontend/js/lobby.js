@@ -3,7 +3,7 @@ let currentRoomId = null;
 let isHost = false;
 
 document.addEventListener("DOMContentLoaded", () => {
-    const playerId = sessionStorage.getItem("playerId");
+    const playerId = getPlayerStorage().getItem("playerId");
 
     if (!playerId) {
         window.location.href = "/pages/login.html";
@@ -13,6 +13,17 @@ document.addEventListener("DOMContentLoaded", () => {
     showLobbyView();
     initializeLobby(playerId);
 });
+
+function getPlayerStorage() {
+    return sessionStorage.getItem("playerId") ? sessionStorage : localStorage;
+}
+
+function clearStoredSession() {
+    ["playerId", "playerName", "isGuest", "roomId"].forEach((key) => {
+        sessionStorage.removeItem(key);
+        localStorage.removeItem(key);
+    });
+}
 
 function showLobbyView() {
     document.getElementById("lobby-container").style.display = "block";
@@ -36,15 +47,16 @@ function showWaitingRoomView(roomId, maxPlayers, isHostUser, players = []) {
 }
 
 function initializeLobby(playerId) {
-    const playerName = sessionStorage.getItem("playerName") || "Người chơi";
-    const isGuest = sessionStorage.getItem("isGuest") === "true";
+    const storage = getPlayerStorage();
+    const playerName = storage.getItem("playerName") || "Người chơi";
+    const isGuest = storage.getItem("isGuest") === "true";
 
     document.getElementById("current-player").textContent = playerName;
     document.getElementById("login-type").textContent = isGuest ? "Chế độ khách" : "Thành viên";
 
     // Đăng xuất
     document.getElementById("btn-logout").addEventListener("click", () => {
-        sessionStorage.clear();
+        clearStoredSession();
         if (socket) socket.disconnect();
         window.location.href = "/pages/login.html";
     });
@@ -68,7 +80,7 @@ function initializeLobby(playerId) {
             
             if (response.ok) {
                 const room = response.room;
-                sessionStorage.setItem("roomId", room.id);
+                getPlayerStorage().setItem("roomId", room.id);
                 showWaitingRoomView(room.id, room.maxPlayers, true, room.players);
             } else {
                 alert("Lỗi tạo phòng: " + response.error);
@@ -85,7 +97,7 @@ function initializeLobby(playerId) {
         socket.emit("lobby:quick", { playerId }, (response) => {
             if (response.ok) {
                 const room = response.room;
-                sessionStorage.setItem("roomId", room.id);
+                getPlayerStorage().setItem("roomId", room.id);
                 // Người tạo phòng mới sẽ là Host, nếu chui vào phòng có sẵn thì ko phải Host
                 const isHostUser = room.players.length > 0 && room.players[0].id === playerId;
                 showWaitingRoomView(room.id, room.maxPlayers, isHostUser, room.players);
@@ -102,7 +114,7 @@ function initializeLobby(playerId) {
             if (response.ok) {
                 currentRoomId = null;
                 isHost = false;
-                sessionStorage.removeItem("roomId");
+                getPlayerStorage().removeItem("roomId");
                 showLobbyView();
             } else {
                 alert("Lỗi rời phòng: " + response.error);
@@ -155,10 +167,10 @@ function renderRooms(rooms) {
 
 // Join phòng thủ công qua Socket Event
 function handleJoinRoom(roomId) {
-    const playerId = sessionStorage.getItem("playerId");
+    const playerId = getPlayerStorage().getItem("playerId");
     socket.emit("lobby:join", { playerId, roomId }, (response) => {
         if (response.ok) {
-            sessionStorage.setItem("roomId", roomId);
+            getPlayerStorage().setItem("roomId", roomId);
             showWaitingRoomView(roomId, response.room.maxPlayers, false, response.room.players);
         } else {
             alert("Không thể vào bàn: " + response.error);
@@ -168,7 +180,7 @@ function handleJoinRoom(roomId) {
 
 function updatePlayersGrid(players) {
     const grid = document.getElementById("players-grid");
-    const currentPlayerId = sessionStorage.getItem("playerId");
+    const currentPlayerId = getPlayerStorage().getItem("playerId");
 
     document.getElementById("current-count").textContent = players.length;
 
@@ -208,7 +220,7 @@ function connectSocket(playerId) {
         socket.emit("auth:restore", { playerId }, (response) => {
             if (response.ok && response.room) {
                 // Đang ở trong phòng thì khôi phục lại view phòng chờ
-                sessionStorage.setItem("roomId", response.room.id);
+                getPlayerStorage().setItem("roomId", response.room.id);
                 const isHostUser = response.room.players.length > 0 && response.room.players[0].id === playerId;
                 showWaitingRoomView(response.room.id, response.room.maxPlayers, isHostUser, response.room.players);
             }
@@ -230,15 +242,16 @@ function connectSocket(playerId) {
 
     // Host bấm bắt đầu -> server gửi event -> Chuyển sang game.html
     socket.on("game_start", (data) => {
-        const playerId = sessionStorage.getItem("playerId");
-        const roomId = (data && data.room && data.room.id) || currentRoomId || sessionStorage.getItem("roomId");
+        const storage = getPlayerStorage();
+        const playerId = storage.getItem("playerId");
+        const roomId = (data && data.room && data.room.id) || currentRoomId || storage.getItem("roomId");
 
         if (!playerId || !roomId) {
             alert("Không thể vào game: thiếu thông tin người chơi hoặc phòng.");
             return;
         }
 
-        sessionStorage.setItem("roomId", roomId);
+        storage.setItem("roomId", roomId);
         window.location.href = `/pages/game.html?mock=0&playerId=${encodeURIComponent(playerId)}&roomId=${encodeURIComponent(roomId)}`;
     });
 
@@ -247,7 +260,7 @@ function connectSocket(playerId) {
         alert("Phòng đã bị đóng!");
         currentRoomId = null;
         isHost = false;
-        sessionStorage.removeItem("roomId");
+        getPlayerStorage().removeItem("roomId");
         showLobbyView();
     });
 }
