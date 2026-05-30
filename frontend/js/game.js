@@ -15,6 +15,9 @@
 
   var DRAW_LAYERS = 5;
 
+  // Track which players are in UNO state (have exactly 1 card)
+  var unoPlayers = {}; // { playerId: true }
+
   /* Clockwise seat order around the table: bottom(0) → left(3) → top(1) → right(2) */
   var SEAT_ORDER_CW = [0, 3, 1, 2];
 
@@ -49,7 +52,17 @@
     playCard: function () { this._beep(660, 0.08, 0.06); },
     drawCard: function () { this._beep(440, 0.06, 0.05); },
     callUno: function () { this._beep(880, 0.15, 0.1); setTimeout(function () { SFX._beep(1100, 0.12, 0.08); }, 160); },
-    turnChange: function () { this._beep(520, 0.05, 0.04); }
+    turnChange: function () { this._beep(520, 0.05, 0.04); },
+    winSound: function () {
+      // Victory fanfare
+      var delays = [0, 150, 300, 450, 600];
+      var freqs  = [523, 659, 784, 1047, 1319];
+      for (var i = 0; i < delays.length; i++) {
+        (function(f, d) {
+          setTimeout(function() { SFX._beep(f, 0.2, 0.1); }, d);
+        })(freqs[i], delays[i]);
+      }
+    }
   };
 
   /* ========== CARD DATA HELPERS ========== */
@@ -188,18 +201,148 @@
         { color: "blue", value: "7" },
       ],
       opponents: [
-        { seat: 1, name: "Minh Anh", count: 7 },
-        { seat: 2, name: "Hoàng Long", count: 7 },
-        { seat: 3, name: "Thu Hà", count: 7 },
+        { seat: 1, name: "Minh Anh", count: 7, playerId: "opp1" },
+        { seat: 2, name: "Hoàng Long", count: 7, playerId: "opp2" },
+        { seat: 3, name: "Thu Hà", count: 7, playerId: "opp3" },
       ],
       currentSeat: 0,
       mySeat: 0,
       mustChooseColor: false,
-      unoButtonVisible: false,
     };
   }
 
-  var state = mockState();
+  var state = USE_MOCK ? mockState() : {
+    direction: 1,
+    currentColor: "red",
+    topCard: null,
+    drawStack: 0,
+    myHand: [],
+    opponents: [],
+    currentSeat: -1,
+    mySeat: 0,
+    mustChooseColor: false,
+  };
+
+  /* ========== UNO CALLOUT ANIMATION ========== */
+  function showUnoCallout(playerName, targetSeat) {
+    SFX.callUno();
+    var overlay = el("uno-callout-overlay");
+    if (!overlay) return;
+
+    // Reset and show the UNO callout
+    overlay.classList.remove("hidden");
+    var textEl = overlay.querySelector(".uno-callout-text");
+    if (textEl) {
+      // Force re-trigger animation
+      textEl.style.animation = "none";
+      void textEl.offsetWidth;
+      textEl.style.animation = "";
+    }
+
+    // Hide after animation completes
+    setTimeout(function () {
+      overlay.classList.add("hidden");
+    }, 1700);
+  }
+
+  /* ========== UNO BADGE ON AVATAR ========== */
+  function updateUnoBadges() {
+    // Update my zone
+    var myInfo = document.querySelector("#my-zone .my-footer .player-info");
+    if (myInfo) {
+      var myWrap = myInfo.querySelector(".avatar-wrap");
+      var existingBadge = myWrap ? myWrap.querySelector(".uno-badge") : null;
+
+      if (state.myHand && state.myHand.length === 1) {
+        myInfo.classList.add("uno-state");
+        if (myWrap && !existingBadge) {
+          var badge = document.createElement("div");
+          badge.className = "uno-badge";
+          badge.textContent = "UNO";
+          myWrap.appendChild(badge);
+        }
+      } else {
+        myInfo.classList.remove("uno-state");
+        if (existingBadge) existingBadge.remove();
+      }
+    }
+
+    // Update opponent zones
+    var zones = document.querySelectorAll("#uno-battlefield .player-zone.opponent");
+    zones.forEach(function (zone) {
+      var seat = parseInt(zone.getAttribute("data-seat"), 10);
+      var info = zone.querySelector(".player-info");
+      var wrap = zone.querySelector(".avatar-wrap");
+      if (!info || !wrap) return;
+
+      var opp = null;
+      (state.opponents || []).forEach(function (o) {
+        if (o.seat === seat) opp = o;
+      });
+
+      var existingBadge = wrap.querySelector(".uno-badge");
+
+      if (opp && opp.count === 1) {
+        info.classList.add("uno-state");
+        if (!existingBadge) {
+          var badge = document.createElement("div");
+          badge.className = "uno-badge";
+          badge.textContent = "UNO";
+          wrap.appendChild(badge);
+        }
+      } else {
+        info.classList.remove("uno-state");
+        if (existingBadge) existingBadge.remove();
+      }
+    });
+  }
+
+  /* ========== WINNER CELEBRATION ========== */
+  function showWinnerModal(winnerName) {
+    SFX.winSound();
+
+    var modal = el("winner-modal");
+    var nameEl = el("winner-name");
+    var countdownEl = el("winner-countdown-num");
+    var particles = el("winner-particles");
+
+    if (!modal) return;
+    if (nameEl) nameEl.textContent = winnerName;
+
+    // Spawn confetti particles
+    if (particles) {
+      particles.innerHTML = "";
+      var colors = ["#ef4444", "#3b82f6", "#22c55e", "#eab308", "#a855f7", "#ec4899", "#f97316", "#06b6d4"];
+      for (var i = 0; i < 60; i++) {
+        var piece = document.createElement("div");
+        piece.className = "confetti-piece";
+        piece.style.left = Math.random() * 100 + "%";
+        piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        piece.style.animationDuration = (2 + Math.random() * 3) + "s";
+        piece.style.animationDelay = (Math.random() * 2) + "s";
+        piece.style.width = (6 + Math.random() * 8) + "px";
+        piece.style.height = (6 + Math.random() * 8) + "px";
+        piece.style.borderRadius = Math.random() > 0.5 ? "50%" : "2px";
+        particles.appendChild(piece);
+      }
+    }
+
+    modal.classList.remove("hidden");
+
+    // Countdown to redirect
+    var secondsLeft = 8;
+    if (countdownEl) countdownEl.textContent = String(secondsLeft);
+
+    var countdownInterval = setInterval(function () {
+      secondsLeft--;
+      if (countdownEl) countdownEl.textContent = String(secondsLeft);
+      if (secondsLeft <= 0) {
+        clearInterval(countdownInterval);
+        // Navigate all players back to lobby
+        window.location.href = "/pages/lobby.html";
+      }
+    }, 1000);
+  }
 
   /* ========== RENDER: DIRECTION ========== */
   function renderDirection() {
@@ -403,13 +546,6 @@
       hand.appendChild(btn);
     });
 
-    // UNO button — always visible, lights up when activatable
-    var uno = el("btn-call-uno");
-    if (uno) {
-      uno.classList.remove("hidden");
-      uno.classList.toggle("uno-active", !!state.unoButtonVisible);
-    }
-
     // Draw guidance
     renderDrawGuide(isMyTurn, hasPlayable);
   }
@@ -462,6 +598,7 @@
     renderOpponents();
     renderMyZone();
     renderColorModal();
+    updateUnoBadges();
   }
 
   /* ========== CARD FLIGHT ANIMATION ========== */
@@ -553,7 +690,10 @@
       state.currentSeat = nextSeat(state.mySeat, state.direction);
     }
 
-    state.unoButtonVisible = state.myHand.length === 1;
+    // Auto-call UNO when I have 1 card left
+    if (state.myHand.length === 1) {
+      showUnoCallout("Bạn", 0);
+    }
   }
 
   function getHandCardButton(index) {
@@ -664,7 +804,10 @@
         state.currentColor = color;
         state.myHand.splice(pw.index, 1);
         state.currentSeat = nextSeat(state.mySeat, state.direction);
-        state.unoButtonVisible = state.myHand.length === 1;
+        // Auto-call UNO
+        if (state.myHand.length === 1) {
+          showUnoCallout("Bạn", 0);
+        }
         render();
         return;
       }
@@ -684,7 +827,10 @@
             state.currentColor = color;
             state.myHand.splice(pw.index, 1);
             state.currentSeat = nextSeat(state.mySeat, state.direction);
-            state.unoButtonVisible = state.myHand.length === 1;
+            // Auto-call UNO
+            if (state.myHand.length === 1) {
+              showUnoCallout("Bạn", 0);
+            }
             motionLock = false;
             render();
             triggerCenterTableNudge();
@@ -696,15 +842,6 @@
 
     state.currentColor = color;
     state.mustChooseColor = false;
-    render();
-  }
-
-  function onCallUno() {
-    if (!state.unoButtonVisible) return;
-    emitOrLog("call_uno", {});
-    SFX.callUno();
-    if (!USE_MOCK) return;
-    state.unoButtonVisible = false;
     render();
   }
 
@@ -763,30 +900,14 @@
     });
   }
 
-  /* ========== MOCK CONTROLS ========== */
-  function mockNextTurn() {
-    if (motionLock) return;
-    SFX.turnChange();
-    state.currentSeat = nextSeat(state.currentSeat, state.direction);
-    render();
-  }
-
-  function mockOpenWild() {
-    state.mustChooseColor = true;
-    pendingWild = null;
-    render();
-  }
-
   /* ========== SOCKET / SERVER ========== */
+  // These functions are kept but now no-op since HUD is removed
   function setSocketStatus(text) {
-    var node = el("socket-status");
-    if (node) node.textContent = text;
+    console.log("[socket]", text);
   }
 
   function setModeBadge() {
-    var badge = el("mode-badge");
-    if (!badge) return;
-    badge.textContent = USE_MOCK ? "UI mẫu (mock)" : "Socket.IO";
+    // No-op: debug HUD removed
   }
 
   /* ========== RECEIVE SERVER STATE ========== */
@@ -798,9 +919,65 @@
 
     console.log("[server] game_update received:", incoming);
 
-    // Track previous hand size for draw animation
-    var prevHandSize = (state.myHand || []).length;
+    // --- Check for winner FIRST ---
+    if (incoming.status === "finished" && incoming.winnerId) {
+      // Find the winner's name
+      var winnerName = incoming.winnerId;
+      if (incoming.players) {
+        incoming.players.forEach(function (p) {
+          if (p.id === incoming.winnerId) {
+            winnerName = p.name || p.id;
+          }
+        });
+      }
 
+      // Still apply state so UI updates (hand empty, etc.)
+      applyStateFields(incoming);
+      render();
+
+      // Show winner modal after a short delay for the final card animation
+      setTimeout(function () {
+        showWinnerModal(winnerName);
+      }, 800);
+      return;
+    }
+
+    // Track previous hand size for draw animation and UNO detection
+    var prevHandSize = (state.myHand || []).length;
+    var prevOpponentCounts = {};
+    (state.opponents || []).forEach(function (o) {
+      if (o.playerId) prevOpponentCounts[o.playerId] = o.count;
+    });
+
+    applyStateFields(incoming);
+    render();
+
+    // --- UNO auto-call detection ---
+    // Check if my hand just became 1 card (I played a card and now have 1)
+    var newHandSize = (state.myHand || []).length;
+    if (newHandSize === 1 && prevHandSize > 1) {
+      showUnoCallout("Bạn", 0);
+    }
+
+    // Check if any opponent just reached 1 card
+    (state.opponents || []).forEach(function (opp) {
+      var prevCount = opp.playerId ? (prevOpponentCounts[opp.playerId] || 0) : 0;
+      if (opp.count === 1 && prevCount > 1) {
+        showUnoCallout(opp.name, opp.seat);
+      }
+    });
+
+    // --- Draw animation: if hand grew, animate cards from draw pile ---
+    var cardsDrawn = newHandSize - prevHandSize;
+    if (cardsDrawn > 0) {
+      animateDrawFromPile(cardsDrawn);
+    }
+
+    SFX.turnChange();
+  }
+
+  /* Helper: apply server fields to local state */
+  function applyStateFields(incoming) {
     // --- Top card & current color ---
     if (incoming.currentCard) {
       var cc = incoming.currentCard;
@@ -856,28 +1033,16 @@
         state.opponents.push({
           seat: oppSeatMap[seatI] !== undefined ? oppSeatMap[seatI] : seatI + 1,
           name: p.name || p.id,
-          count: oppHand.length
+          count: oppHand.length,
+          playerId: p.id
         });
         seatI++;
       }
     }
 
-    // --- UNO button ---
-    state.unoButtonVisible = state.myHand && state.myHand.length === 1;
     state.mustChooseColor = false;
     pendingWild = null;
     motionLock = false;
-
-    render();
-
-    // --- Draw animation: if hand grew, animate cards from draw pile ---
-    var newHandSize = (state.myHand || []).length;
-    var cardsDrawn = newHandSize - prevHandSize;
-    if (cardsDrawn > 0) {
-      animateDrawFromPile(cardsDrawn);
-    }
-
-    SFX.turnChange();
   }
 
   /* ========== DRAW ANIMATION (live mode) ========== */
@@ -915,10 +1080,6 @@
       });
     });
 
-    // UNO button
-    var unoBtn = el("btn-call-uno");
-    if (unoBtn) unoBtn.addEventListener("click", onCallUno);
-
     // Draw pile
     var drawRoot = el("draw-pile");
     if (drawRoot) {
@@ -927,36 +1088,28 @@
         if (e.key === "Enter" || e.key === " ") { e.preventDefault(); performDraw(); }
       });
     }
-
-    // Demo controls
-    var demoNt = el("demo-next-turn");
-    if (demoNt) demoNt.addEventListener("click", mockNextTurn);
-    var demoDr = el("demo-draw");
-    if (demoDr) demoDr.addEventListener("click", performDraw);
-    var demoW = el("demo-wild");
-    if (demoW) demoW.addEventListener("click", mockOpenWild);
   }
 
   function initSocket() {
     if (USE_MOCK || typeof io !== "function") {
-      setSocketStatus(USE_MOCK ? "Mock — thêm ?mock=0 để kết nối" : "Thiếu Socket.IO");
+      setSocketStatus(USE_MOCK ? "Mock mode" : "Missing Socket.IO");
       return;
     }
     if (!MY_PLAYER_ID || !MY_ROOM_ID) {
-      setSocketStatus("Thiếu playerId hoặc roomId trong URL");
+      setSocketStatus("Missing playerId or roomId");
       return;
     }
-    setSocketStatus("Đang kết nối… " + SOCKET_URL);
+    setSocketStatus("Connecting to " + SOCKET_URL);
     socket = io(SOCKET_URL, { transports: ["websocket", "polling"] });
 
     socket.on("connect", function () {
-      setSocketStatus("Đã kết nối: " + socket.id);
-      // Gửi auth để backend bind socket → player → room
+      setSocketStatus("Connected: " + socket.id);
+      // Send auth to bind socket → player → room
       socket.emit("auth", { playerId: MY_PLAYER_ID, roomId: MY_ROOM_ID });
       console.log("[socket] auth sent:", MY_PLAYER_ID, MY_ROOM_ID);
     });
-    socket.on("disconnect", function (r) { setSocketStatus("Ngắt: " + r); });
-    socket.on("connect_error", function (e) { setSocketStatus("Lỗi: " + (e && e.message || "?")); });
+    socket.on("disconnect", function (r) { setSocketStatus("Disconnected: " + r); });
+    socket.on("connect_error", function (e) { setSocketStatus("Error: " + (e && e.message || "?")); });
 
     // Listen for game state from backend
     ["game_state", "state", "room:state", "game_update"].forEach(function (ev) {

@@ -9,13 +9,6 @@
 </head>
 <body>
   <div id="game-shell">
-    <header id="demo-hud" aria-label="Thanh trạng thái mẫu">
-      <span id="mode-badge" class="badge">UI mẫu (mock)</span>
-      <button type="button" id="demo-next-turn">Đổi lượt</button>
-      <button type="button" id="demo-draw">Bốc bài</button>
-      <button type="button" id="demo-wild">Mở chọn màu</button>
-      <span id="socket-status"></span>
-    </header>
 
       <div id="uno-battlefield">
         <!-- TOP OPPONENT -->
@@ -104,7 +97,6 @@
               </div>
               <span class="player-name">Bạn</span>
             </div>
-            <button type="button" id="btn-call-uno">UNO!</button>
           </div>
         </div>
 
@@ -150,6 +142,28 @@
 
         <!-- Card flight animation layer -->
         <div id="card-motion-layer" aria-hidden="true"></div>
+
+        <!-- UNO Callout animation overlay -->
+        <div id="uno-callout-overlay" class="hidden" aria-hidden="true">
+          <div class="uno-callout-text">UNO!</div>
+        </div>
+
+        <!-- Winner celebration modal -->
+        <div id="winner-modal" class="hidden" aria-label="Kết quả trận đấu">
+          <div class="winner-backdrop"></div>
+          <div class="winner-content">
+            <div class="winner-particles" id="winner-particles"></div>
+            <div class="winner-stars">
+              <span class="star">✦</span><span class="star">★</span><span class="star">✦</span>
+              <span class="star">★</span><span class="star">✦</span>
+            </div>
+            <div class="winner-trophy">🏆</div>
+            <h1 class="winner-title">WINNER WINNER<br>CHICKEN DINNER!</h1>
+            <div class="winner-name" id="winner-name"></div>
+            <div class="winner-subtitle">đã chiến thắng ván đấu!</div>
+            <div class="winner-countdown">Quay về sảnh trong <span id="winner-countdown-num">8</span>s...</div>
+          </div>
+        </div>
 
         <!-- Action guide -->
         <div id="action-guide" class="hidden"></div>
