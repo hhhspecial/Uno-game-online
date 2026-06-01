@@ -41,7 +41,7 @@ function handleEvent(event) {
       return
     }
     // ❗ special rule: cannot stack draw2 on draw4
-    if (game.currentCard.value === "draw4" && card.value === "draw2") {
+    if (game.currentCard.value === "draw4" && card.value === "draw2" && game.drawStack > 0) {
         console.log("Cannot stack draw4 on draw2")
         return
     }
