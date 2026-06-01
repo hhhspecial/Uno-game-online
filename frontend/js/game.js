@@ -3,7 +3,7 @@
 
   /* ========== CONFIG ========== */
   var params = new URLSearchParams(window.location.search);
-  var SOCKET_URL = params.get("server") || "http://localhost:3000";
+  var SOCKET_URL = params.get("server") || window.location.origin;
   var USE_MOCK = params.get("mock") !== "0";
   var MY_PLAYER_ID = params.get("playerId") || "";
   var MY_ROOM_ID = params.get("roomId") || "";
