@@ -29,5 +29,5 @@ Client connects → emits 'auth' with playerId and roomId
 'game_start' - Tell clients to enter the game page // FE NEED TO ADD
 'game_update' - Send current game state to players
 'room_closed' - Inform clients that the room has been closed
-'player_disconnected' - Inform clients that a player disconnected after timeout
+'player_disconnected' - Inform clients that a player disconnected after timeout // FE NEED TO ADD
 'game_aborted' - Inform clients that the current game was aborted // FE NEED TO ADD
