@@ -14,7 +14,8 @@ const {
     removePlayer,
     toPublicRoom,
     getPublicWaitingRooms,
-    findRoomByPlayer
+    findRoomByPlayer,
+    startGame
 } = require('../lobby/roomManager')
 
 const {
@@ -40,6 +41,7 @@ const reconnectTimers = {}
 // 'lobby:quick' - Quick join a waiting room or create if none available
 // 'lobby:join' - Join a specific room
 // 'lobby:leave' - Leave current room
+// 'lobby:start' - Start current room game by host
 // 'play_card' - Play a card in the game
 // 'draw_card' - Draw a card in the game
 
@@ -49,9 +51,9 @@ function isNonEmptyString(value) {
 
 function requirePlayerId(playerId) {
     if (!isNonEmptyString(playerId)) {
-        return { 
-            ok: false, 
-            error: 'Player ID is required' 
+        return {
+            ok: false,
+            error: 'Player ID is required'
         };
     }
 
@@ -60,9 +62,9 @@ function requirePlayerId(playerId) {
 
 function requireRoomId(roomId) {
     if (!isNonEmptyString(roomId)) {
-        return { 
-            ok: false, 
-            error: 'Room ID is required' 
+        return {
+            ok: false,
+            error: 'Room ID is required'
         };
     }
 
@@ -70,9 +72,9 @@ function requireRoomId(roomId) {
 }
 
 function isValidCardPayload(card) {
-    return card && 
-        isNonEmptyString(card.color) && 
-        isNonEmptyString(card.value);  
+    return card &&
+        isNonEmptyString(card.color) &&
+        isNonEmptyString(card.value);
 }
 
 function emitLobbyRooms(io) {
@@ -89,8 +91,8 @@ function emitRoomUpdate(io, room) {
     });
 }
 
-function replaceOldSocket(io, oldSocketId, newSocketId){
-    if(!oldSocketId || oldSocketId === newSocketId) {
+function replaceOldSocket(io, oldSocketId, newSocketId) {
+    if (!oldSocketId || oldSocketId === newSocketId) {
         return;
     }
 
@@ -98,7 +100,7 @@ function replaceOldSocket(io, oldSocketId, newSocketId){
     if (!oldSocket) {
         return;
     }
-    
+
     oldSocket.emit('session:replaced', {
         type: 'session:replaced',
         reason: 'same_player_connected_elsewhere'
@@ -162,9 +164,9 @@ async function authenticateSocket(socket, playerId, roomId) { // validate player
         delete reconnectTimers[playerId];
     }
 
-    return { 
-        ok: true, 
-        player, 
+    return {
+        ok: true,
+        player,
         room,
         oldSocketId
     };
@@ -176,9 +178,9 @@ function setupSocket(io) {
     io.on('connection', socket => {
         console.log(`Socket connected: ${socket.id}`)
 
-        
+
         // Client can emit 'auth' to validate their playerId and roomId and bind their socket to their player
-        socket.on('auth', async({ playerId, roomId } = {}, callback) => {
+        socket.on('auth', async ({ playerId, roomId } = {}, callback) => {
             const playerCheck = requirePlayerId(playerId);
             if (!playerCheck.ok) {
                 return callback?.(playerCheck);
@@ -224,7 +226,7 @@ function setupSocket(io) {
 
             if (!player) {
                 return callback?.({
-                    ok:false,
+                    ok: false,
                     error: 'Player not found'
                 });
             }
@@ -238,7 +240,7 @@ function setupSocket(io) {
             if (room) {
                 socket.join(room.id);
 
-                if(reconnectTimers[playerId]) {
+                if (reconnectTimers[playerId]) {
                     clearTimeout(reconnectTimers[playerId]);
                     delete reconnectTimers[playerId];
                 }
@@ -254,7 +256,7 @@ function setupSocket(io) {
                 room: room ? toPublicRoom(room) : null,
                 game: game ? sanitize(game, playerId) : null
             });
-        
+
             if (game) {
                 socket.emit('game_update', {
                     type: 'game_update',
@@ -287,16 +289,16 @@ function setupSocket(io) {
 
             const player = await getPlayer(playerId);
             if (!player) {
-                return callback?.({ 
-                    ok: false, 
-                    error: 'Player not found' 
+                return callback?.({
+                    ok: false,
+                    error: 'Player not found'
                 });
             }
 
             const result = createRoom(player, { name, maxPlayers });
             if (!result.ok) {
-                return callback?.({ 
-                    ok: false, 
+                return callback?.({
+                    ok: false,
                     error: result.error,
                     room: result.room ? toPublicRoom(result.room) : null
                 });
@@ -324,16 +326,16 @@ function setupSocket(io) {
 
             const player = await getPlayer(playerId);
             if (!player) {
-                return callback?.({ 
-                    ok: false, 
-                    error: 'Player not found' 
+                return callback?.({
+                    ok: false,
+                    error: 'Player not found'
                 });
             }
 
             const result = quickJoin(player);
             if (!result.ok) {
-                return callback?.({ 
-                    ok: false, 
+                return callback?.({
+                    ok: false,
                     error: result.error,
                     room: result.room ? toPublicRoom(result.room) : null
                 });
@@ -367,16 +369,16 @@ function setupSocket(io) {
 
             const player = await getPlayer(playerId);
             if (!player) {
-                return callback?.({ 
-                    ok: false, 
-                    error: 'Player not found' 
+                return callback?.({
+                    ok: false,
+                    error: 'Player not found'
                 });
             }
 
             const result = joinRoom(roomId, player);
             if (!result.ok) {
-                return callback?.({ 
-                    ok: false, 
+                return callback?.({
+                    ok: false,
                     error: result.error,
                     room: result.room ? toPublicRoom(result.room) : null
                 });
@@ -401,9 +403,9 @@ function setupSocket(io) {
             const playerId = getPlayerId(socket.id);
             const roomId = getRoomId(socket.id);
             if (!playerId || !roomId) {
-                return callback?.({ 
-                    ok: false, 
-                    error: 'Not in a room' 
+                return callback?.({
+                    ok: false,
+                    error: 'Not in a room'
                 });
             }
 
@@ -429,22 +431,68 @@ function setupSocket(io) {
             emitLobbyRooms(io);
         });
 
+        socket.on('lobby:start', ({ roomId } = {}, callback) => {
+            const playerId = getPlayerId(socket.id);
+            const currentRoomId = getRoomId(socket.id);
+
+            if (!playerId) {
+                return callback?.({
+                    ok: false,
+                    error: 'Not authenticated'
+                });
+            }
+
+            if (!roomId) {
+                return callback?.({
+                    ok: false,
+                    error: 'Room ID is required'
+                });
+            }
+
+            if (currentRoomId !== roomId) {
+                return callback?.({
+                    ok: false,
+                    error: 'You are not in this room'
+                });
+            }
+
+            const result = startGame(roomId, playerId);
+
+            if (!result.ok) {
+                return callback?.({
+                    ok: false,
+                    error: result.error
+                });
+            }
+
+            const room = result.room;
+
+            callback?.({
+                ok: true,
+                room: toPublicRoom(room)
+            });
+
+            emitRoomUpdate(io, room);
+            emitLobbyRooms(io);
+            startGameIfReady(io, room);
+        });
+
         // Game events. On success, add event to game queue and process. Then emit game update to all players in the room
         socket.on('play_card', ({ card, chosenColor } = {}, callback) => {
             const playerId = getPlayerId(socket.id);
             const roomId = getRoomId(socket.id);
 
             if (!playerId || !roomId) {
-                return callback?.({ 
-                    ok: false, 
-                    error: 'Not in a game' 
+                return callback?.({
+                    ok: false,
+                    error: 'Not in a game'
                 });
             }
 
             if (!isValidCardPayload(card)) {
-                return callback?.({ 
-                    ok: false, 
-                    error: 'Valid card is required' 
+                return callback?.({
+                    ok: false,
+                    error: 'Valid card is required'
                 });
             }
 
@@ -460,9 +508,9 @@ function setupSocket(io) {
 
             const game = processQueue();
             if (!game) {
-                return callback?.({ 
-                    ok: false, 
-                    error: 'Game not found' 
+                return callback?.({
+                    ok: false,
+                    error: 'Game not found'
                 });
             }
 
@@ -475,9 +523,9 @@ function setupSocket(io) {
             const roomId = getRoomId(socket.id);
 
             if (!playerId || !roomId) {
-                return callback?.({ 
-                    ok: false, 
-                    error: 'Not in a game' 
+                return callback?.({
+                    ok: false,
+                    error: 'Not in a game'
                 });
             }
             addEvent({
@@ -490,9 +538,9 @@ function setupSocket(io) {
 
             const game = processQueue();
             if (!game) {
-                return callback?.({ 
-                    ok: false, 
-                    error: 'Game not found' 
+                return callback?.({
+                    ok: false,
+                    error: 'Game not found'
                 });
             }
             emitGameToPlayers(io, game);

@@ -146,6 +146,30 @@ function removePlayer(roomID, playerID) {
     return room;
 }
 
+function startGame(roomID, hostID) {
+    const room = rooms[roomID];
+    if (!room) {
+        return { ok: false, error: 'Room not found' };
+    }
+
+    if (room.status !== 'waiting') {
+        return { ok: false, error: 'Game already started' };
+    }
+
+    if (room.hostId !== hostID) {
+        return { ok: false, error: 'Only the host can start the game' };
+    }
+    if (room.players.length < 2) {
+        return { ok: false, error: 'At least 2 players are required to start the game' };
+    }
+
+    room.status = 'playing';
+    return { 
+        ok: true, 
+        room 
+    };
+}
+
 function allRooms() {
     return Object.values(rooms);
 }
@@ -169,5 +193,6 @@ module.exports = {
     toPublicRoom,
     toPublicPlayer,
     getPublicWaitingRooms,
-    findRoomByPlayer
+    findRoomByPlayer,
+    startGame
 };

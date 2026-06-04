@@ -17,5 +17,17 @@ Client connects → emits 'auth' with playerId and roomId
 'lobby:quick' - Quick join a waiting room or create if none available
 'lobby:join' - Join a specific room
 'lobby:leave' - Leave current room
+'lobby:start' - Start current room game by host
 'play_card' - Play a card in the game
 'draw_card' - Draw a card in the game
+
+
+    Socket events emitted to FE:
+'lobby_rooms' - Send updated list of waiting rooms
+'room_update' - Send updated room information
+'session:replaced' - Inform old socket that this player session was replaced // FE NEED TO ADD 
+'game_start' - Tell clients to enter the game page // FE NEED TO ADD
+'game_update' - Send current game state to players
+'room_closed' - Inform clients that the room has been closed
+'player_disconnected' - Inform clients that a player disconnected after timeout
+'game_aborted' - Inform clients that the current game was aborted // FE NEED TO ADD
