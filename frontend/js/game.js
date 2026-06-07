@@ -221,6 +221,7 @@
     currentSeat: -1,
     mySeat: 0,
     mustChooseColor: false,
+    drawnThisTurn: false,
   };
 
   /* ========== UNO CALLOUT ANIMATION ========== */
@@ -344,7 +345,45 @@
     }, 1000);
   }
 
-  /* ========== RENDER: DIRECTION ========== */
+  // game aborted
+  function showGameAbortedModal(data) {
+    // Don't show if winner modal is already up
+    var winnerModal = el("winner-modal");
+    if (winnerModal && !winnerModal.classList.contains("hidden")) return;
+
+    var modal = el("aborted-modal");
+    if (!modal) {
+      // Create the modal dynamically if not in HTML
+      modal = document.createElement("div");
+      modal.id = "aborted-modal";
+      modal.setAttribute("aria-label", "Trận đấu bị hủy");
+      modal.innerHTML =
+        '<div class="aborted-backdrop"></div>' +
+        '<div class="aborted-content">' +
+          '<div class="aborted-icon">⚠️</div>' +
+          '<h2 class="aborted-title">Trận đấu đã bị hủy</h2>' +
+          '<p class="aborted-reason">Một người chơi đã mất kết nối quá lâu.</p>' +
+          '<div class="aborted-countdown">Quay về sảnh trong <span id="aborted-countdown-num">5</span>s...</div>' +
+        '</div>';
+      document.body.appendChild(modal);
+    }
+    modal.classList.remove("hidden");
+
+    var countdownEl = document.getElementById("aborted-countdown-num");
+    var secondsLeft = 5;
+    if (countdownEl) countdownEl.textContent = String(secondsLeft);
+
+    var countdownInterval = setInterval(function () {
+      secondsLeft--;
+      if (countdownEl) countdownEl.textContent = String(secondsLeft);
+      if (secondsLeft <= 0) {
+        clearInterval(countdownInterval);
+        window.location.href = "/pages/lobby.html";
+      }
+    }, 1000);
+  }
+
+  // render direction
   function renderDirection() {
     var icon = document.querySelector(".direction-indicator .dir-icon");
     var text = document.querySelector(".direction-indicator .dir-text");
@@ -354,7 +393,7 @@
     text.textContent = ccw ? "Ngược chiều" : "Thuận chiều";
   }
 
-  /* ========== RENDER: COLOR GLOW ========== */
+  // render color glow
   function renderGlow() {
     var glow = el("current-color-glow");
     if (!glow) return;
@@ -363,7 +402,7 @@
     glow.classList.add("glow-" + c);
   }
 
-  /* ========== RENDER: DISCARD PILE ========== */
+  // render discard pile
   function renderDiscard() {
     var pile = el("discard-pile");
     if (!pile) return;
@@ -390,7 +429,7 @@
     }
   }
 
-  /* ========== RENDER: DRAW PILE (ALL FACE-DOWN) ========== */
+  // render draw pile
   function renderDrawPile() {
     var stack = el("draw-pile-stack");
     if (!stack) return;
@@ -414,7 +453,7 @@
     }
   }
 
-  /* ========== RENDER: OPPONENT CARD FAN ========== */
+  // render opponent card fan
   function renderOpponentFan(zone, count) {
     var container = zone.querySelector(".opponent-cards");
     if (!container) return;
@@ -454,7 +493,7 @@
     }
   }
 
-  /* ========== RENDER: OPPONENTS ========== */
+  // render opponents
   function renderOpponents() {
     var zones = document.querySelectorAll("#uno-battlefield .player-zone.opponent");
     zones.forEach(function (zone) {
@@ -489,7 +528,7 @@
     });
   }
 
-  /* ========== RENDER: MY HAND ========== */
+  // render my hand
   function renderMyZone() {
     var myZone = el("my-zone");
     var hand = el("my-hand");
@@ -504,7 +543,8 @@
     hand.innerHTML = "";
 
     var isMyTurn = state.currentSeat === state.mySeat;
-    var playableIndices = isMyTurn && !state.mustChooseColor
+    var inDrawChoice = isMyTurn && state.drawnThisTurn;
+    var playableIndices = isMyTurn && !state.mustChooseColor && !inDrawChoice
       ? getPlayableIndices(state.myHand, state.topCard, state.currentColor, state.drawStack)
       : [];
     var hasPlayable = playableIndices.length > 0;
@@ -527,7 +567,17 @@
       btn.setAttribute("tabindex", "0");
       btn.setAttribute("aria-label", cardFaceText(card) + " " + cardColor(card));
 
-      if (isMyTurn && !motionLock && !state.mustChooseColor) {
+      if (inDrawChoice) {
+        // During draw choice, all cards are dimmed and disabled
+        // The drawn card (last one) gets a subtle highlight
+        var isLast = index === cardCount - 1;
+        btn.disabled = true;
+        if (isLast) {
+          btn.classList.add("drawn-highlight");
+        } else {
+          btn.classList.add("dimmed");
+        }
+      } else if (isMyTurn && !motionLock && !state.mustChooseColor) {
         var isPlayable = playableIndices.indexOf(index) !== -1;
         if (isPlayable) {
           btn.classList.add("playable");
@@ -547,10 +597,10 @@
     });
 
     // Draw guidance
-    renderDrawGuide(isMyTurn, hasPlayable);
+    renderDrawGuide(isMyTurn && !inDrawChoice, hasPlayable);
   }
 
-  /* ========== RENDER: DRAW GUIDANCE ========== */
+  // render draw guidance
   function renderDrawGuide(isMyTurn, hasPlayable) {
     var drawPile = el("draw-pile");
     var guide = el("action-guide");
@@ -583,13 +633,28 @@
     }
   }
 
-  /* ========== RENDER: COLOR MODAL ========== */
+  // render color modal
   function renderColorModal() {
     var modal = el("color-picker-modal");
     if (modal) modal.classList.toggle("hidden", !state.mustChooseColor);
   }
 
-  /* ========== RENDER: ALL ========== */
+  // render draw choice
+  function renderDrawChoice() {
+    var modal = el("draw-choice-modal");
+    if (!modal) return;
+    var isMyTurn = state.currentSeat === state.mySeat;
+    var show = isMyTurn && state.drawnThisTurn && !state.mustChooseColor;
+    modal.classList.toggle("hidden", !show);
+
+    // Also disable draw pile during draw choice
+    var drawPile = el("draw-pile");
+    if (drawPile) {
+      drawPile.classList.toggle("draw-disabled", show);
+    }
+  }
+
+  // render all
   function render() {
     renderDirection();
     renderGlow();
@@ -598,10 +663,11 @@
     renderOpponents();
     renderMyZone();
     renderColorModal();
+    renderDrawChoice();
     updateUnoBadges();
   }
 
-  /* ========== CARD FLIGHT ANIMATION ========== */
+  // card flight animation
   function animateCardFlight(fromRect, toRect, cardEl, opts) {
     var duration = (opts && opts.duration) || 420;
     var onDone = opts && opts.onDone;
@@ -660,7 +726,7 @@
     }
   }
 
-  /* ========== GAME ACTIONS ========== */
+  // game actions
   function emitOrLog(event, payload) {
     if (socket && socket.connected) {
       socket.emit(event, payload);
@@ -845,8 +911,18 @@
     render();
   }
 
-  /* ========== DRAW CARD ========== */
+  function onCancelColorChoice() {
+    if (!state.mustChooseColor || !pendingWild) return;
+    // Cancel the pending play
+    pendingWild = null;
+    state.mustChooseColor = false;
+    render();
+  }
+
+  // draw card
   function performDraw() {
+    // Block drawing if in draw choice state
+    if (state.drawnThisTurn) return;
     emitOrLog("draw_card", {});
     if (!USE_MOCK) {
       SFX.drawCard();
@@ -900,8 +976,7 @@
     });
   }
 
-  /* ========== SOCKET / SERVER ========== */
-  // These functions are kept but now no-op since HUD is removed
+  // socket / server
   function setSocketStatus(text) {
     console.log("[socket]", text);
   }
@@ -910,7 +985,7 @@
     // No-op: debug HUD removed
   }
 
-  /* ========== RECEIVE SERVER STATE ========== */
+  // receive server state
   function applyServerPayload(payload) {
     lastServerState = payload;
     if (!payload || typeof payload !== "object") return;
@@ -1041,11 +1116,12 @@
     }
 
     state.mustChooseColor = false;
+    state.drawnThisTurn = !!incoming.drawnThisTurn;
     pendingWild = null;
     motionLock = false;
   }
 
-  /* ========== DRAW ANIMATION (live mode) ========== */
+  // draw animation
   function animateDrawFromPile(count) {
     var drawPile = el("draw-pile");
     var hand = el("my-hand");
@@ -1070,7 +1146,32 @@
     }
   }
 
-  /* ========== WIRE UI ========== */
+  // draw choice actions
+  function onPlayDrawnCard() {
+    if (!state.drawnThisTurn) return;
+    // The drawn card is always the last card in hand
+    var lastIndex = state.myHand.length - 1;
+    var card = state.myHand[lastIndex];
+    if (!card) return;
+    onPlayCard(lastIndex, card);
+  }
+
+  function onKeepCard() {
+    if (!state.drawnThisTurn) return;
+    emitOrLog("keep_card", {});
+    if (!USE_MOCK) {
+      // Server will send game_update with nextTurn
+      state.drawnThisTurn = false;
+      render();
+      return;
+    }
+    // Mock mode: just pass turn
+    state.drawnThisTurn = false;
+    state.currentSeat = nextSeat(state.mySeat, state.direction);
+    render();
+  }
+
+  // wire UI
   function wireUi() {
     // Color picker
     document.querySelectorAll("#color-picker-modal .color-slice").forEach(function (slice) {
@@ -1080,6 +1181,9 @@
       });
     });
 
+    var btnCancelColor = el("cancel-color-btn");
+    if (btnCancelColor) btnCancelColor.addEventListener("click", onCancelColorChoice);
+
     // Draw pile
     var drawRoot = el("draw-pile");
     if (drawRoot) {
@@ -1088,6 +1192,12 @@
         if (e.key === "Enter" || e.key === " ") { e.preventDefault(); performDraw(); }
       });
     }
+
+    // Draw choice modal buttons
+    var btnPlay = el("draw-choice-play");
+    var btnKeep = el("draw-choice-keep");
+    if (btnPlay) btnPlay.addEventListener("click", onPlayDrawnCard);
+    if (btnKeep) btnKeep.addEventListener("click", onKeepCard);
   }
 
   function initSocket() {
@@ -1115,9 +1225,20 @@
     ["game_state", "state", "room:state", "game_update"].forEach(function (ev) {
       socket.on(ev, applyServerPayload);
     });
+
+    // A player disconnected after 30s timeout
+    socket.on("player_disconnected", function (data) {
+      console.log("[socket] Player disconnected from room:", data);
+    });
+
+    // Game was aborted because a player stayed disconnected too long
+    socket.on("game_aborted", function (data) {
+      console.log("[socket] Game aborted:", data);
+      showGameAbortedModal(data);
+    });
   }
 
-  /* ========== DEAL ANIMATION ========== */
+  // deal animation
   function dealCards(onDone) {
     if (!USE_MOCK) { if (onDone) onDone(); return; }
 
@@ -1216,7 +1337,7 @@
     setTimeout(dealNext, 500);
   }
 
-  /* ========== INIT ========== */
+  // init
   function init() {
     setModeBadge();
     wireUi();

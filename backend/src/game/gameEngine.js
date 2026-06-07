@@ -25,7 +25,14 @@ function handleEvent(event) {
 
     const hand = game.hand[playerId]
 
-    // 2. check if card is in hand
+    if (game.drawnThisTurn) {
+        const drawnCard = game.drawnThisTurn
+        if (card.color !== drawnCard.color || card.value !== drawnCard.value) {
+            console.log("After drawing, can only play the drawn card")
+            return
+        }
+    }
+
     const index = hand.findIndex(
       c => c.color === card.color && c.value === card.value
     )
@@ -35,7 +42,6 @@ function handleEvent(event) {
       return
     }
 
-    // 3. check validity
     if (!isValidMove(card, game.currentCard)) {
       console.log("Invalid move")
       return
@@ -46,14 +52,12 @@ function handleEvent(event) {
         return
     }
 
-    // 4. check draw stack
     if (game.drawStack > 0) {
         if (card.value !== "draw2" && card.value !== "draw4") {
             console.log("Must respond to draw stack")
             return
         }
     }
-    // 5. check wild before removing
     if (card.color === "wild") {
 
         if (!chosenColor) {
@@ -70,7 +74,8 @@ function handleEvent(event) {
     }
 
 
-    // 4. update
+    // update — clear drawn state
+    game.drawnThisTurn = null
     
     hand.splice(index, 1)
     if (hand.length === 0) {
@@ -81,7 +86,6 @@ function handleEvent(event) {
         return game
     }
 
-    // 7. update current card
     if (card.color === "wild") {
         game.currentCard = {
          color: chosenColor,
@@ -114,6 +118,12 @@ function handleEvent(event) {
 
         if (game.currentTurn !== playerId) {
             console.log("Not your turn")
+            return
+        }
+
+        // Prevent drawing again if already drew this turn
+        if (game.drawnThisTurn) {
+            console.log("Already drew this turn — must play or keep")
             return
         }
 
@@ -150,8 +160,35 @@ function handleEvent(event) {
 
         if (drawn) {
             game.hand[playerId].push(drawn)
+
+            // if the drawn card is playable, let the player choose to play it or keep it
+            if (isValidMove(drawn, game.currentCard)) {
+                console.log("Drawn card is playable, waiting for player choice:", drawn)
+                game.drawnThisTurn = drawn
+                // don't call nextTurn — player must choose play or keep
+            } else {
+                console.log("Drawn card not playable, passing turn:", drawn)
+                nextTurn(game)
+            }
+        } else {
+            nextTurn(game)
+        }
+    }
+
+  // keep card
+    if (type === "keep_card") {
+        if (game.currentTurn !== playerId) {
+            console.log("Not your turn")
+            return
         }
 
+        if (!game.drawnThisTurn) {
+            console.log("No drawn card to keep")
+            return
+        }
+
+        console.log("Player chose to keep drawn card:", game.drawnThisTurn)
+        game.drawnThisTurn = null
         nextTurn(game)
     }
 

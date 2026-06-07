@@ -547,6 +547,36 @@ function setupSocket(io) {
             callback?.({ ok: true });
         });
 
+        // player drew a playable card and chose to keep it (not play it)
+        socket.on('keep_card', (payload = {}, callback) => {
+            const playerId = getPlayerId(socket.id);
+            const roomId = getRoomId(socket.id);
+
+            if (!playerId || !roomId) {
+                return callback?.({
+                    ok: false,
+                    error: 'Not in a game'
+                });
+            }
+            addEvent({
+                type: 'keep_card',
+                data: {
+                    playerId,
+                    roomId
+                }
+            });
+
+            const game = processQueue();
+            if (!game) {
+                return callback?.({
+                    ok: false,
+                    error: 'Game not found'
+                });
+            }
+            emitGameToPlayers(io, game);
+            callback?.({ ok: true });
+        });
+
         // Handle client disconnect. Start a timer to wait for possible reconnection within RECONNECT_TIMEOUT. If timer expires, remove player from room and emit updates. If player reconnects with 'auth:restore' before timer expires, clear the timer and restore their session
         socket.on('disconnect', () => {
             const playerId = getPlayerId(socket.id);
@@ -606,6 +636,7 @@ function sanitize(game, currentPlayerId) {
         direction: game.direction,
         currentCard: game.currentCard,
         drawStack: game.drawStack,
+        drawnThisTurn: game.currentTurn === currentPlayerId && game.drawnThisTurn ? true : false,
         status: game.status,
         winnerId: game.winnerId || null
     }

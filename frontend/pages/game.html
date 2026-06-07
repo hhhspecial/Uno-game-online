@@ -8,6 +8,15 @@
   <link rel="stylesheet" href="../css/game.css" />
 </head>
 <body>
+  <!-- Portrait orientation overlay -->
+  <div id="rotate-overlay" aria-label="Xoay ngang thiết bị">
+    <div class="rotate-icon">
+      <span class="rotate-arrow">↻</span>
+    </div>
+    <h2>Xoay ngang thiết bị<span>Trải nghiệm tốt nhất ở chế độ ngang</span></h2>
+    <p class="rotate-hint">Hãy xoay điện thoại ngang để chơi UNO. Bạn cũng có thể tắt khóa xoay màn hình trong phần cài đặt.</p>
+  </div>
+
   <div id="game-shell">
 
       <div id="uno-battlefield">
@@ -137,6 +146,28 @@
               tabindex="0"
               aria-label="Vàng"
             ></div>
+          </div>
+          <button id="cancel-color-btn" class="cancel-color-btn" type="button">Hủy</button>
+        </div>
+
+        <!-- Draw choice modal (play or keep the drawn card) -->
+        <div
+          id="draw-choice-modal"
+          class="hidden"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Chọn đánh hoặc giữ lá bài"
+        >
+          <div class="draw-choice-content">
+            <p class="draw-choice-title">🃏 Lá bốc được có thể đánh!</p>
+            <div class="draw-choice-buttons">
+              <button id="draw-choice-play" class="draw-choice-btn play" type="button">
+                Đánh lá này
+              </button>
+              <button id="draw-choice-keep" class="draw-choice-btn keep" type="button">
+                Giữ lại
+              </button>
+            </div>
           </div>
         </div>
 

@@ -21,6 +21,7 @@ function createGame(roomId, players){
     direction: 1,
     currentCard :{color:"red", value:"5"},
     drawStack : 0,
+    drawnThisTurn: null,
     status : "playing",
     winnerId: null
   }
