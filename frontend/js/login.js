@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
     // Chuyển thẳng vào sảnh nếu đã đăng nhập
     if (sessionStorage.getItem("playerId") || localStorage.getItem("playerId")) {
-        window.location.href = "/page/lobby.html";
+        window.location.href = "/pages/lobby.html";
         return;
     }
 
