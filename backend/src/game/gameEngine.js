@@ -1,6 +1,7 @@
-const { getGame, updateGame } = require("./gameState")
+const { getGame, updateGame, deleteGame } = require("./gameState")
 const { isValidMove, nextTurn } = require("./gameLogic")
 const { createDeck, shuffle} = require("./deck")
+const { setStatus } = require("../lobby/roomManager")
 
 function handleEvent(event) {
   const data = event.data
@@ -83,6 +84,12 @@ function handleEvent(event) {
         game.winnerId = playerId
         console.log(playerId + " wins!")
         updateGame(roomId, game)
+        setStatus(roomId, "waiting") // reset room status to allow new game
+        
+        // delay game deletion to allow clients to receive final state
+        setTimeout(() => {
+            deleteGame(roomId)
+        }, 8000) 
         return game
     }
 

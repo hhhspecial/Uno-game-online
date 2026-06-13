@@ -127,7 +127,7 @@ function startGameIfReady(io, room) {
     }
 
     let game = getGame(room.id)
-    if (!game) {
+    if (!game || game.status === 'finished') {
         game = createGame(room.id, room.players)
     }
 

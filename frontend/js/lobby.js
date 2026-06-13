@@ -248,6 +248,12 @@ function connectSocket(playerId) {
             if (response.ok && response.room) {
                 // Đang ở trong phòng thì khôi phục lại view phòng chờ
                 getPlayerStorage().setItem("roomId", response.room.id);
+
+                if (response.room.status === 'playing') {
+                    window.location.href = `/pages/game.html?mock=0&playerId=${encodeURIComponent(playerId)}&roomId=${encodeURIComponent(response.room.id)}`;
+                    return;
+                }
+                
                 const isHostUser = isCurrentUserHost(response.room, playerId);
                 showWaitingRoomView(response.room.id, response.room.maxPlayers, isHostUser, response.room.players);
             }
@@ -262,6 +268,15 @@ function connectSocket(playerId) {
     // Cập nhật chi tiết phòng chờ mình đang đứng realtime (khi có người vào/ra)
     socket.on("room_update", (data) => {
         if (data.room && data.room.id === currentRoomId) {
+
+            if (data.room.status === 'playing') {
+                const storage = getPlayerStorage();
+                const storagePlayerId = storage.getItem("playerId");
+                storage.setItem("roomId", data.room.id);
+                window.location.href = `/pages/game.html?mock=0&playerId=${encodeURIComponent(storagePlayerId)}&roomId=${encodeURIComponent(data.room.id)}`;
+                return;
+            }
+
             isHost = isCurrentUserHost(data.room, playerId);
             updateHostActions();
             updatePlayersGrid(data.room.players);
