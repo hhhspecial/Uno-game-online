@@ -50,7 +50,7 @@ function showWaitingRoomView(roomId, maxPlayers, isHostUser, players = []) {
     document.getElementById("room-id-display").textContent = roomId;
     document.getElementById("room-max-players").textContent = maxPlayers;
     
-    // Phân quyền hiển thị nút Start Game cho chủ phòng
+    // Show start-game controls only for the host
     updateHostActions();
 
     updatePlayersGrid(players);
@@ -64,17 +64,17 @@ function initializeLobby(playerId) {
     document.getElementById("current-player").textContent = playerName;
     document.getElementById("login-type").textContent = isGuest ? "Chế độ khách" : "Thành viên";
 
-    // Đăng xuất
+    // Logout handler
     document.getElementById("btn-logout").addEventListener("click", () => {
         clearStoredSession();
         if (socket) socket.disconnect();
         window.location.href = "/pages/login.html";
     });
 
-    // Kết nối Socket
+    // Connect socket
     connectSocket(playerId);
 
-    // Host bắt đầu game
+    // Host starts the game
     document.getElementById("btn-start-game").addEventListener("click", function () {
         if (!isHost || !currentRoomId) return;
 
@@ -91,7 +91,7 @@ function initializeLobby(playerId) {
         });
     });
 
-    //Tạo phòng thông qua Socket thay vì Fetch để tự động bind SocketID
+    // Create room via socket so server can bind the Socket ID
     document.getElementById("create-room-form").addEventListener("submit", (e) => {
         e.preventDefault();
         const btn = document.getElementById("btn-create-room");
@@ -115,7 +115,7 @@ function initializeLobby(playerId) {
         });
     });
 
-    // Vào phòng nhanh thông qua Event "lobby:quick"
+    // Quick-join via the "lobby:quick" event
     document.getElementById("btn-quick-join").addEventListener("click", function() {
         this.disabled = true;
         this.querySelector(".btn-text").style.display = "none";
@@ -135,7 +135,7 @@ function initializeLobby(playerId) {
         });
     });
 
-    // Nút rời phòng
+    // Leave room button
     document.getElementById("btn-leave-room").onclick = () => {
         socket.emit("lobby:leave", {}, (response) => {
             if (response.ok) {
@@ -150,7 +150,7 @@ function initializeLobby(playerId) {
     };
     document.getElementById("btn-back-lobby").onclick = document.getElementById("btn-leave-room").onclick;
 
-    // Lấy danh sách phòng lần đầu bằng API
+    // Load initial list of rooms via API
     loadRoomsList();
 }
 
@@ -234,7 +234,7 @@ function resetQuickJoinButton() {
     btn.querySelector(".btn-loading").style.display = "none";
 }
 
-//KẾT NỐI SOCKET
+// Socket connection and event handlers
 function connectSocket(playerId) {
     if (socket && socket.connected) return;
 
@@ -243,7 +243,7 @@ function connectSocket(playerId) {
     socket.on("connect", () => {
         console.log("Socket connected:", socket.id);
         
-        // Cố gắng khôi phục session nếu người dùng F5 hoặc mất mạng
+        // Attempt to restore session after reconnect or page refresh
         socket.emit("auth:restore", { playerId }, (response) => {
             if (response.ok && response.room) {
                 // Đang ở trong phòng thì khôi phục lại view phòng chờ
@@ -260,12 +260,12 @@ function connectSocket(playerId) {
         });
     });
 
-    // Cập nhật danh sách tất cả các phòng sảnh ngoài realtime
+    // Update lobby rooms list in real-time
     socket.on("lobby_rooms", (data) => {
         if (data.rooms) renderRooms(data.rooms);
     });
 
-    // Cập nhật chi tiết phòng chờ mình đang đứng realtime (khi có người vào/ra)
+    // Update current waiting room in real-time (join/leave)
     socket.on("room_update", (data) => {
         if (data.room && data.room.id === currentRoomId) {
 
@@ -284,7 +284,7 @@ function connectSocket(playerId) {
         }
     });
 
-    // Host bấm bắt đầu -> server gửi event -> Chuyển sang game.html
+    // Handle server 'game_start' event and navigate to the game page
     socket.on("game_start", (data) => {
         const storage = getPlayerStorage();
         const playerId = storage.getItem("playerId");
@@ -299,7 +299,7 @@ function connectSocket(playerId) {
         window.location.href = `/pages/game.html?mock=0&playerId=${encodeURIComponent(playerId)}&roomId=${encodeURIComponent(roomId)}`;
     });
 
-    // Xử lý khi phòng bị hủy do Host/người cuối cùng rời đi
+    // Handle room closed (host left or room destroyed)
     socket.on("room_closed", (data) => {
         alert("Phòng đã bị đóng!");
         currentRoomId = null;

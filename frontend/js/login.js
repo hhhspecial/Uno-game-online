@@ -1,11 +1,11 @@
 document.addEventListener("DOMContentLoaded", () => {
-    // Chuyển thẳng vào sảnh nếu đã đăng nhập
+    // Redirect to lobby if the user is already authenticated
     if (sessionStorage.getItem("playerId") || localStorage.getItem("playerId")) {
         window.location.href = "/pages/lobby.html";
         return;
     }
 
-    // Xử lý chuyển tab Đăng nhập / Đăng ký
+    // Toggle Login / Register tabs
     const tabButtons = document.querySelectorAll(".tab-nav .tab-btn");
     const tabContents = document.querySelectorAll(".tab-content");
 
@@ -27,7 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // Gọi POST /auth/login
+    // Send login request to the server (POST /auth/login)
     document.getElementById("login-form").addEventListener("submit", (e) => {
         e.preventDefault();
         const username = document.getElementById("login-username").value.trim();
@@ -49,7 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
             .catch(() => showMessage("login-error", "Lỗi kết nối server."));
     });
 
-    // Gọi POST /auth/register
+    // Send registration request to the server (POST /auth/register)
     document.getElementById("register-form").addEventListener("submit", (e) => {
         e.preventDefault();
         const username = document.getElementById("reg-username").value.trim();
@@ -71,7 +71,7 @@ document.addEventListener("DOMContentLoaded", () => {
             .catch(() => showMessage("register-error", "Lỗi kết nối server."));
     });
 
-    // Gọi POST /auth/guest
+    // Create a guest account on the server (POST /auth/guest)
     const btnGuest = document.getElementById("btn-guest");
     btnGuest.addEventListener("click", () => {
         btnGuest.disabled = true;
@@ -100,6 +100,8 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function saveSessionAndEnterLobby(id, name, isGuest) {
+    // Persist session: use sessionStorage for guests, localStorage for registered users,
+    // then navigate to the lobby.
     clearStoredSession();
 
     const storage = isGuest ? sessionStorage : localStorage;
@@ -110,6 +112,7 @@ function saveSessionAndEnterLobby(id, name, isGuest) {
 }
 
 function clearStoredSession() {
+    // Remove any stored player or room identifiers from both storages.
     ["playerId", "playerName", "isGuest", "roomId"].forEach((key) => {
         sessionStorage.removeItem(key);
         localStorage.removeItem(key);
