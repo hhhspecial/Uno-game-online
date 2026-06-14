@@ -40,8 +40,13 @@ function updateGame(roomId, newState) {
   games[roomId] = newState;
 }
 
+function deleteGame(roomId) {
+  delete games[roomId];
+}
+  
 module.exports = {
   createGame,
   getGame,
-  updateGame
+  updateGame,
+  deleteGame
 }
