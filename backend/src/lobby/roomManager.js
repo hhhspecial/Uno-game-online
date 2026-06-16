@@ -1,4 +1,6 @@
 const { v4: uuidv4 } = require('uuid');
+const User = require("../auth/userModel")
+const GameHistory = require("../game/gameHistoryModel")
 
 const MAX_PLAYERS = 4;
 const rooms = {};
@@ -174,9 +176,9 @@ function startGame(roomID, hostID) {
     }
 
     room.status = 'playing';
-    return { 
-        ok: true, 
-        room 
+    return {
+        ok: true,
+        room
     };
 }
 
@@ -190,6 +192,54 @@ function getPublicWaitingRooms() {
     return allRooms()
         .filter(room => room.status === 'waiting')
         .map(toPublicRoom);
+}
+
+// Save the result of a finished match to the database, and update players' stats and rewards
+async function saveMatchResultAndRewards(roomId, players, winnerId) {
+    try {
+        const winnerInfo = players.find(p => p.id === winnerId);
+        const winnerName = winnerInfo ? winnerInfo.name : "Người thắng";
+
+        await GameHistory.create({
+            roomId,
+            players: players.map(p => ({ id: p.id, name: p.name })),
+            winnerId,
+            winnerName
+        });
+
+        for (const player of players) {
+            const isWinner = player.id === winnerId;
+
+            const xpGained = isWinner ? 50 : 25; 
+
+            const dbUser = await User.findOne({ id: player.id });
+            if (dbUser) {
+                let newXp = (dbUser.xp || 0) + xpGained;
+                let currentLevel = dbUser.level || 1;
+
+                while (newXp >= 100) {
+                    currentLevel += 1;
+                    newXp -= 100;
+                }
+
+                await User.updateOne(
+                    { id: player.id },
+                    {
+                        $inc: {
+                            gamesPlayed: 1,
+                            gamesWon: isWinner ? 1 : 0
+                        },
+                        $set: {
+                            xp: newXp,
+                            level: currentLevel
+                        }
+                    }
+                );
+            }
+        }
+    } catch (error) {
+        console.error("Helper saveMatchResultAndRewards failed:", error);
+    }
 }
 
 module.exports = {
@@ -206,5 +256,6 @@ module.exports = {
     toPublicPlayer,
     getPublicWaitingRooms,
     findRoomByPlayer,
-    startGame
+    startGame,
+    saveMatchResultAndRewards
 };

@@ -3,6 +3,10 @@ const { isValidMove, nextTurn } = require("./gameLogic")
 const { createDeck, shuffle} = require("./deck")
 const { setStatus } = require("../lobby/roomManager")
 
+const User = require("../auth/userModel")
+const GameHistory = require("./gameHistoryModel")
+const { saveMatchResultAndRewards } = require("../lobby/roomManager")
+
 function handleEvent(event) {
   const data = event.data
   const type = event.type
@@ -84,8 +88,12 @@ function handleEvent(event) {
         game.winnerId = playerId
         console.log(playerId + " wins!")
         updateGame(roomId, game)
-        setStatus(roomId, "waiting") // reset room status to allow new game
+        setStatus(roomId, "waiting") 
         
+        saveMatchResultAndRewards(roomId, game.players, playerId)
+            .then(() => console.log(`Database updated successfully for finished game in Room ${roomId}`))
+            .catch(err => console.error("Error updating database", err));
+
         // delay game deletion to allow clients to receive final state
         setTimeout(() => {
             deleteGame(roomId)
