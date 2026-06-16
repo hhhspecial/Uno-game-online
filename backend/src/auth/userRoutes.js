@@ -31,15 +31,30 @@ router.get('/me', authRequired, async (req, res) => {
 
 // 2. PATCH /users/me - Cập nhật thông tin (ví dụ: đổi tên hiển thị)
 router.patch('/me', authRequired, async (req, res) => {
-    const { name } = req.body;
-    if (!name || name.trim().length < 3) {
-        return res.status(400).json({ ok: false, error: 'Tên phải dài tối thiểu 3 ký tự.' });
+    // Nhận thêm trường avatar từ body gửi lên
+    const { name, avatar } = req.body; 
+    
+    const updateData = {};
+    if (name) {
+        if (name.trim().length < 3) {
+            return res.status(400).json({ ok: false, error: 'Tên phải dài tối thiểu 3 ký tự.' });
+        }
+        updateData.name = name.trim();
+    }
+    
+    if (avatar) {
+        // Kiểm tra xem ID avatar gửi lên có nằm trong danh sách định nghĩa sẵn không
+        const isValid = VALID_AVATARS.some(av => av.id === avatar);
+        if (!isValid) {
+            return res.status(400).json({ ok: false, error: 'Mẫu avatar không hợp lệ.' });
+        }
+        updateData.avatar = avatar;
     }
 
     try {
         const updatedUser = await User.findOneAndUpdate(
             { id: req.playerObj.id },
-            { $set: { name: name.trim() } },
+            { $set: updateData },
             { new: true }
         ).select('-password').lean();
 

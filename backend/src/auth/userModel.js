@@ -40,6 +40,10 @@ const userSchema = new mongoose.Schema({
     level: {
         type: Number,
         default: 1
+    },
+    avatar: {
+        type: String,
+        default: "avatar_default"
     }
 }, {
     timestamps: true
