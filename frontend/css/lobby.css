@@ -1,6 +1,4 @@
-/* ==========================================================================
-   RESET & BIẾN TOÀN CỤC (VARIABLES)
-   ========================================================================== */
+/* RESET & VARIABLES */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -23,7 +21,7 @@
 body {
   background: var(--dark);
   color: var(--text);
-  font-family: 'Nunito', sans-serif;
+  font-family: 'Be Vietnam Pro', Arial, sans-serif;
   min-height: 100vh;
   padding: 20px;
   display: flex;
@@ -31,14 +29,13 @@ body {
 }
 
 h1, h2 {
-  font-family: 'Lilita One', cursive;
-  font-weight: 400;
-  letter-spacing: 1px;
+  font-family: 'Be Vietnam Pro', Arial, sans-serif;
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 1.25;
 }
 
-/* ==========================================================================
-   BỐ CỤC CHUNG (CONTAINERS)
-   ========================================================================== */
+/* LAYOUT CONTAINERS */
 .lobby-container, 
 .waiting-room-container {
   width: 100%;
@@ -66,9 +63,7 @@ h1, h2 {
   color: var(--yellow);
 }
 
-/* ==========================================================================
-   HEADER LOBBY
-   ========================================================================== */
+/* LOBBY HEADER */
 .lobby-header {
   display: flex;
   justify-content: space-between;
@@ -107,9 +102,7 @@ h1, h2 {
   color: var(--muted);
 }
 
-/* ==========================================================================
-   FORMS & INPUTS
-   ========================================================================== */
+/* FORMS & INPUTS */
 .form-group {
   margin-bottom: 16px;
 }
@@ -131,7 +124,7 @@ h1, h2 {
   border-radius: 10px;
   padding: 12px 14px;
   color: var(--text);
-  font-family: 'Nunito', sans-serif;
+  font-family: 'Be Vietnam Pro', Arial, sans-serif;
   font-size: 15px;
   outline: none;
   transition: border-color 0.2s;
@@ -142,11 +135,9 @@ h1, h2 {
   border-color: var(--blue);
 }
 
-/* ==========================================================================
-   NÚT BẤM (BUTTONS)
-   ========================================================================== */
+/* BUTTONS */
 button {
-  font-family: 'Nunito', sans-serif;
+  font-family: 'Be Vietnam Pro', Arial, sans-serif;
   cursor: pointer;
   outline: none;
   transition: all 0.2s;
@@ -234,7 +225,7 @@ button:disabled {
   background: #0056b3;
 }
 
-/* Spinner cho nút loading */
+/* Button loading spinner */
 .spinner-small {
   width: 16px; height: 16px;
   border: 2px solid rgba(255,255,255,0.3);
@@ -244,9 +235,7 @@ button:disabled {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ==========================================================================
-   DANH SÁCH PHÒNG CHƠI (ROOM GRID)
-   ========================================================================== */
+/* ROOM GRID */
 .rooms-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -293,9 +282,7 @@ button:disabled {
   text-transform: uppercase;
 }
 
-/* ==========================================================================
-   PHÒNG CHỜ (WAITING ROOM VIEW)
-   ========================================================================== */
+/* WAITING ROOM */
 .waiting-room-header {
   display: flex;
   flex-direction: column;
@@ -316,7 +303,7 @@ button:disabled {
 
 .players-section h2 {
   color: #fff;
-  font-family: 'Nunito', sans-serif;
+  font-family: 'Be Vietnam Pro', Arial, sans-serif;
   font-weight: 800;
   margin-bottom: 20px;
 }
@@ -347,7 +334,7 @@ button:disabled {
   justify-content: center;
   font-size: 28px;
   font-weight: 800;
-  font-family: 'Lilita One', cursive;
+  font-family: 'Be Vietnam Pro', Arial, sans-serif;
   margin: 0 auto 16px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.3);
 }
