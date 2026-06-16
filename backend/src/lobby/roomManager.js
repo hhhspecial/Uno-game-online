@@ -4,6 +4,7 @@ const MAX_PLAYERS = 4;
 const rooms = {};
 // Room structure: { id: string, players: array of player objects, gameState: object }
 
+// Convert a player object to a public representation
 function toPublicPlayer(player) {
     return {
         id: player.id,
@@ -12,6 +13,7 @@ function toPublicPlayer(player) {
     };
 }
 
+// Convert a Room object to a public representation
 function toPublicRoom(room) {
     return {
         id: room.id,
@@ -25,12 +27,14 @@ function toPublicRoom(room) {
     };
 }
 
+// Find the room that a player is currently in, or return null if not in any room
 function findRoomByPlayer(playerID) {
     return Object.values(rooms).find(room =>
         room.players.some(p => p.id === playerID)
     ) || null;
 }
 
+// Create a new room with the given player as the host
 function createRoom(player, option = {}) {
     const id = 'R_' + uuidv4().slice(0, 8).toUpperCase(); // Generate a unique room ID
 
@@ -67,6 +71,7 @@ function createRoom(player, option = {}) {
     };
 }
 
+// Add a player to a room if possible, and return the updated room or an error message
 function joinRoom(roomID, player) {
     const room = rooms[roomID];
     if (!room)
@@ -102,6 +107,7 @@ function joinRoom(roomID, player) {
     };
 }
 
+// Try to find a waiting room with space and join it, or create a new room if none found
 function quickJoin(player) {
     // Try to find a room that is waiting and has space
     const waitingRoom = Object.values(rooms).find(room =>
@@ -118,16 +124,19 @@ function quickJoin(player) {
     return result;
 }
 
+// Get a room by its ID, or return null if not found
 function getRoom(id) {
     return rooms[id] || null;
 }
 
+// Update the status of a room (e.g. 'waiting', 'playing', 'finished')
 function setStatus(roomID, status) {
     if (rooms[roomID]) {
         rooms[roomID].status = status;
     }
 }
 
+// Remove a player from a room, and delete the room if it becomes empty. If the host leaves, assign a new host.
 function removePlayer(roomID, playerID) {
     const room = rooms[roomID];
 
@@ -146,6 +155,7 @@ function removePlayer(roomID, playerID) {
     return room;
 }
 
+// Start the game in a room if the host initiates it and there are enough players
 function startGame(roomID, hostID) {
     const room = rooms[roomID];
     if (!room) {
@@ -170,10 +180,12 @@ function startGame(roomID, hostID) {
     };
 }
 
+// Get a list of all rooms in the system
 function allRooms() {
     return Object.values(rooms);
 }
 
+// Get a list of all rooms that are currently waiting for players, in a public representation
 function getPublicWaitingRooms() {
     return allRooms()
         .filter(room => room.status === 'waiting')

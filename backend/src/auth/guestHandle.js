@@ -4,6 +4,7 @@ const User = require('./userModel');
 
 const users = {};
 
+// Convert a User document to a public player object
 function toPublicAuthPlayer(user) {
     return {
         id: user.id,
@@ -12,9 +13,10 @@ function toPublicAuthPlayer(user) {
     };
 }
 
+// Create a new guest user with a unique ID and random username
 const createGuestUser = async () => {
-    const id = 'guest_' + uuidv4().slice(0, 8); // Generate a unique guest ID
-    const guestUsername = `guest_` + Math.floor(Math.random() * 10000 + 100); // Generate a random guest username
+    const id = 'guest_' + uuidv4().slice(0, 8);
+    const guestUsername = `guest_` + Math.floor(Math.random() * 10000 + 100);
     const guest = await User.create({
         id,
         name: guestUsername,
@@ -27,6 +29,7 @@ const createGuestUser = async () => {
     return player;
 };
 
+// Register a new user with username and password
 async function register(username, password) {
 
     username = username.trim();
@@ -61,7 +64,7 @@ async function register(username, password) {
     return player;
 }
 
-
+// Login with username and password
 async function login(username, password) {
     username = username.trim();
 
@@ -83,6 +86,7 @@ async function login(username, password) {
 
 }
 
+// Get player info by ID, using cache for performance
 async function getPlayer(id) {
     const cachedPlayer = users[id];
     if (cachedPlayer) return cachedPlayer;
