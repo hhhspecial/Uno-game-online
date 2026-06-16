@@ -16,7 +16,7 @@
 body {
   min-height: 100vh;
   background: var(--dark);
-  font-family: 'Nunito', sans-serif;
+  font-family: 'Be Vietnam Pro', Arial, sans-serif;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -85,7 +85,7 @@ body {
 }
 .logo-badge:hover { transform: rotate(0deg) scale(1.05); }
 .logo-badge span { font-family:'Lilita One',cursive; font-size:32px; color:#fff; letter-spacing:1px; }
-.logo h1 { font-family:'Lilita One',cursive; font-size:28px; color:var(--text); letter-spacing:1px; }
+.logo h1 { font-family:'Lilita One','Be Vietnam Pro',cursive; font-size:28px; color:var(--text); letter-spacing:1px; }
 .logo p  { font-size:13px; color:var(--muted); margin-top:4px; }
 
 .tab-nav {
@@ -102,7 +102,7 @@ body {
   border: none; outline: none;
   background: transparent;
   color: var(--muted);
-  font-family: 'Nunito', sans-serif;
+  font-family: 'Be Vietnam Pro', Arial, sans-serif;
   font-size: 14px;
   font-weight: 700;
   border-radius: 8px;
@@ -136,7 +136,7 @@ body {
   border-radius: 10px;
   padding: 12px 14px;
   color: var(--text);
-  font-family: 'Nunito', sans-serif;
+  font-family: 'Be Vietnam Pro', Arial, sans-serif;
   font-size: 15px;
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
@@ -165,7 +165,7 @@ body {
   border: none; outline: none;
   border-radius: 10px;
   color: #fff;
-  font-family: 'Nunito', sans-serif;
+  font-family: 'Be Vietnam Pro', Arial, sans-serif;
   font-size: 15px;
   font-weight: 800;
   cursor: pointer;
@@ -197,7 +197,7 @@ body {
   border: 1px solid var(--border);
   border-radius: 10px;
   color: var(--text);
-  font-family: 'Nunito', sans-serif;
+  font-family: 'Be Vietnam Pro', Arial, sans-serif;
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
