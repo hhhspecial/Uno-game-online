@@ -36,6 +36,9 @@ app.use('/auth', authRouter);
 const lobbyRouter = require('./lobby');
 app.use('/lobby', lobbyRouter);
 
+const userRouter = require('./auth/userRoutes');
+app.use('/users', userRouter);
+
 app.get('/ping', (req, res) => {
     res.json({ status: 'UNO Server is running' });
 });

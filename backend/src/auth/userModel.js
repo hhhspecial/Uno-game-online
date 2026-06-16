@@ -24,6 +24,22 @@ const userSchema = new mongoose.Schema({
     lastLoginAt: {
         type: Date,
         default: null
+    },
+    gamesPlayed: {
+        type: Number,
+        default: 0
+    },
+    gamesWon: {
+        type: Number,
+        default: 0
+    },
+    xp: {
+        type: Number,
+        default: 0
+    },
+    level: {
+        type: Number,
+        default: 1
     }
 }, {
     timestamps: true

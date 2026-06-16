@@ -3,6 +3,13 @@ POST /auth/guest - Create a new guest user and return their info
 POST /auth/register - Register a new user with username and password
 POST /auth/login - Login with username and password
 
+    User REST API:  
+GET /users/me - Get current user's account info (including exp, level...)
+PATCH /users/me - Update user info (e.g. change display name)
+PATCH /users/password - Change password (Only for registered accounts)
+GET /users/me/stats - Personal stats + Recent 10 games history
+GET /users/leaderboard - Leaderboard (Exclude guest accounts)
+
     Lobby REST API:
 GET    /lobby/rooms - List all waiting rooms
 POST   /lobby/rooms - Create a new room
